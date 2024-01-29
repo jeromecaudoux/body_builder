@@ -1,0 +1,194 @@
+import 'dart:async';
+import 'dart:developer';
+
+import 'package:body_builder/body_builder/src/body_builder.dart';
+import 'package:body_builder/body_builder/src/body_state.dart';
+import 'package:body_builder/body_builder/src/state_provider.dart';
+import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
+import 'package:rxdart/rxdart.dart';
+
+typedef CacheProvider<T> = Future<T?> Function(String? query);
+typedef DataProvider<T> = Future<T> Function(String? query);
+
+abstract class BodyProviderBase<T> {
+  final String? name;
+
+  const BodyProviderBase({this.name});
+
+  BodyState<T> initialState(String? query);
+
+  Stream<BodyState<T>> resolve({
+    String? query,
+    bool allowState = true,
+    bool allowCache = true,
+    bool allowData = true,
+  });
+}
+
+class BodyProvider<T> extends BodyProviderBase<T> {
+  final StateProvider<T>? state;
+  final CacheProvider<T>? cache;
+  final DataProvider<T> data;
+
+  const BodyProvider({
+    this.state,
+    this.cache,
+    required this.data,
+    super.name,
+  });
+
+  bool get isPaginated => state != null && state is PaginatedState;
+
+  @override
+  BodyState<T> initialState(String? query) {
+    if (state?.hasData(query) == true) {
+      return BodyState.data(state!.items(query));
+    }
+    return BodyState.loading();
+  }
+
+  @override
+  Stream<BodyState<T>> resolve({
+    String? query,
+    bool allowState = true,
+    bool allowCache = true,
+    bool allowData = true,
+  }) async* {
+    // Disable state or cache providers if they are not set
+    allowState = allowState && state != null;
+    allowCache = allowCache && cache != null;
+
+    yield* _loadState(
+      query: query,
+      allowState: allowState,
+      allowCache: allowCache,
+      allowData: allowData,
+    );
+  }
+
+  Stream<BodyState<T>> _loadState({
+    String? query,
+    bool allowState = true,
+    bool allowCache = true,
+    bool allowData = true,
+  }) async* {
+    if (!allowState) {
+      yield* _loadAfterState(query, allowCache, allowData);
+      return;
+    }
+    if (state?.hasData(query) == true) {
+      yield BodyState.data(state!.items(query));
+      return;
+    }
+    yield* _loadAfterState(query, allowCache, allowData);
+  }
+
+  Stream<BodyState<T>> _loadAfterState(
+    String? query,
+    bool allowCache,
+    bool allowData,
+  ) async* {
+    if (allowCache) {
+      yield* _loadCache(query, allowData: allowData);
+    } else if (allowData) {
+      // #loading is emitted here only and not inside _loadData to avoid
+      // clearing the data from cache between the cache and data providers
+      yield BodyState.loading();
+      yield* _loadData(query);
+    }
+  }
+
+  Stream<BodyState<T>> _loadCache(
+    String? query, {
+    bool allowData = true,
+  }) async* {
+    yield BodyState.loading();
+    if (cache == null) {
+      if (allowData) {
+        yield* _loadData(query);
+      }
+      return;
+    }
+    try {
+      final T? data = await cache!(query);
+      if (data != null) {
+        yield BodyState.cache(data, isLoading: allowData);
+      }
+      if (allowData) {
+        yield* _loadData(query);
+      }
+    } catch (e, s) {
+      debugPrint('Failed to load cache: $e\n$s');
+      yield BodyState.error(e, s);
+    }
+  }
+
+  Stream<BodyState<T>> _loadData(String? query) async* {
+    try {
+      yield BodyState.data(await data(query));
+    } catch (e, s) {
+      debugPrint('Failed to load data: $e\n$s');
+      yield BodyState.error(e, s);
+    }
+  }
+}
+
+extension ProviderExt on Iterable<BodyProviderBase> {
+  BodyState initialState(String? query) => _merge(map(
+          (state) => state.initialState(query).copy(providerName: state.name)))
+      .copy(combinedStates: true);
+
+  Stream<BodyState> resolve({
+    String? query,
+    bool allowState = true,
+    bool allowCache = true,
+    bool allowData = true,
+  }) {
+    return Rx.combineLatest(
+      map(
+        (provider) => provider
+            .resolve(
+              query: query,
+              allowState: allowState,
+              allowCache: allowCache,
+              allowData: allowData,
+            )
+            .map((BodyState event) => event.copy(providerName: provider.name)),
+      ),
+      _merge,
+    ).map((event) => event.copy(combinedStates: true));
+  }
+
+  BodyState _merge(Iterable<BodyState> states) {
+    if (kDebugMode && BodyBuilderConfig.instance.debugLogsEnabled) {
+      _debugPrintStates(states);
+    }
+    bool oneIsLoading = states.any((state) => state.isLoading);
+    bool oneIsCache = states.any((state) => state.isCache);
+    bool allHaveData = states.every((state) => state.hasData);
+    if (allHaveData) {
+      if (oneIsCache) {
+        return BodyState.cache(states, isLoading: oneIsLoading);
+      }
+      return BodyState.data(states, isLoading: oneIsLoading);
+    }
+
+    BodyState? errorState =
+        states.firstWhereOrNull((state) => state.error != null);
+    if (errorState != null) {
+      return BodyState.error(errorState.error!, errorState.errorStack)
+          .copy(data: states);
+    }
+    return BodyState.loading().copy(data: states);
+  }
+
+  void _debugPrintStates(Iterable<BodyState<dynamic>> states) {
+    log('--- BodyBuilder -> OnEvent Start ---');
+    log('Providers: ${map((e) => e.name ?? 'UnknownProvider')}');
+    for (var state in states) {
+      log('State: $state');
+    }
+    log('--- BodyBuilder -> OnEvent End ---');
+  }
+}
