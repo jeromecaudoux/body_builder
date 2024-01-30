@@ -3,12 +3,13 @@ import 'package:body_builder_example/basic_sample_page.dart';
 import 'package:body_builder_example/custom_builder_page.dart';
 import 'package:body_builder_example/multi_providers_page.dart';
 import 'package:body_builder_example/paginated_page.dart';
+import 'package:body_builder_example/search_sample_page.dart';
 import 'package:body_builder_example/states.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 void main() {
-  BodyBuilder.setDefaultConfig(debugLogsEnabled: false);
+  BodyBuilder.setDefaultConfig(debugLogsEnabled: true);
   runApp(const MyApp());
 }
 
@@ -22,6 +23,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => BasicSampleState()),
         ChangeNotifierProvider(create: (_) => MultiProviderSampleState()),
         ChangeNotifierProvider(create: (_) => PaginatedSampleState()),
+        ChangeNotifierProvider(create: (_) => SearchSampleState()),
       ],
       child: MaterialApp(
         theme: ThemeData(
@@ -99,12 +101,15 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 );
               },
-              child: const Text('Paginated example'),
+              child: const Text('Pagination example'),
             ),
             FilledButton(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('TO-DO')),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SearchSamplePage(),
+                  ),
                 );
               },
               child: const Text('Search example'),
@@ -118,6 +123,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 context.read<BasicSampleState>().clear();
                 context.read<MultiProviderSampleState>().clear();
                 context.read<PaginatedSampleState>().clear();
+                context.read<SearchSampleState>().clear();
 
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('All states cleared!')),

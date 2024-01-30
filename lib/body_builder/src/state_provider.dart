@@ -1,10 +1,10 @@
 import 'dart:math';
 
+import 'package:body_builder/body_builder/src/paginated_response.dart';
+import 'package:body_builder/body_builder/src/typedefs_child_body_builder.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:body_builder/body_builder/src/paginated_response.dart';
-import 'package:body_builder/body_builder/src/typedefs_child_body_builder.dart';
 
 typedef StateConvertor<T, C extends ChangeNotifier> = T? Function(
   C changeNotifier,
@@ -88,12 +88,12 @@ class PaginatedState<T> extends StateProvider<Iterable<T>> {
   @override
   bool hasMore([String? query]) => get(_toKey(query)).hasMore;
 
-  DataState<T> get(String query) => _states[_toKey(query)] ??= DataState();
+  DataState<T> get(String? query) => _states[_toKey(query)] ??= DataState();
 
-  Iterable<T> onFetch(String query, PaginatedBase<T> response) =>
+  Iterable<T> onFetch(String? query, PaginatedBase<T> response) =>
       get(query).onFetch(response);
 
-  String _toKey(String? query) => query?.toLowerCase() ?? '';
+  String _toKey(String? query) => query?.toLowerCase().trim() ?? '';
 
   @override
   void clear() => _states.clear();

@@ -76,7 +76,7 @@ class _PaginatedPageState extends State<PaginatedPage> {
     return Future.delayed(const Duration(seconds: 2), () {
       /// The first page must be 1. the default value is 0 so you can always
       /// pass "lastPage + 1" to [PaginatedResponse].
-      int lastPage = _state.get(query ?? '').page;
+      int lastPage = _state.get(query).page;
 
       /// Uncomment this to test the error handling mechanism
       // if (page == 2) {
@@ -93,7 +93,7 @@ class _PaginatedPageState extends State<PaginatedPage> {
         lastPage + 1,
         5,
       );
-    }).then((response) => _state.onFetch(query ?? '', response));
+    }).then((response) => _state.onFetch(query, response));
   }
 }
 
