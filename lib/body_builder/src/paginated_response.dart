@@ -1,16 +1,10 @@
-import 'package:json_annotation/json_annotation.dart';
-
-mixin class PaginatedResponse<T> {
-  @JsonKey(name: 'data')
-  List<T>? items;
-  @JsonKey(name: 'path')
+mixin class PaginatedBase<T> {
+  /// The path of the API request or anything else that will be used in logs
   String? path;
-  @JsonKey(name: 'current_page')
+  /// The items of the current page
+  List<T>? items;
+  /// The current page index
   int? currentPage;
-  @JsonKey(name: 'last_page')
+  /// The last page index
   int? lastPage;
-
-  // This class is intended to be used as a mixin, and should not be
-  // extended directly.
-  factory PaginatedResponse._() => throw Exception('No');
 }

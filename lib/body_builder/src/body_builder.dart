@@ -409,7 +409,7 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
 
   void loadMoreIfNeeded() {
     if (_hasMore()) {
-      _loadNextPage();
+      fetch();
     }
   }
 
@@ -422,12 +422,6 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
     return result.first.state?.hasMore(widget.searchController?.text ?? '') ==
         true;
   }
-
-  void _loadNextPage() => WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          fetch();
-        }
-      });
 
   @override
   void dispose() {

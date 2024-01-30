@@ -90,7 +90,7 @@ class PaginatedState<T> extends StateProvider<Iterable<T>> {
 
   DataState<T> get(String query) => _states[_toKey(query)] ??= DataState();
 
-  Iterable<T> onFetch(String query, PaginatedResponse<T> response) =>
+  Iterable<T> onFetch(String query, PaginatedBase<T> response) =>
       get(query).onFetch(response);
 
   String _toKey(String? query) => query?.toLowerCase() ?? '';
@@ -162,7 +162,7 @@ class DataState<T> {
     }
   }
 
-  Iterable<T> onFetch(PaginatedResponse<T> response) {
+  Iterable<T> onFetch(PaginatedBase<T> response) {
     if (response.items?.isNotEmpty != true) {
       if (_page < _lastPage) {
         debugPrint(

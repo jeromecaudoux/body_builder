@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:body_builder/body_builder/body_builder.dart';
-import 'package:body_builder_example/basic_sample_page.dart';
+import 'package:body_builder_example/states.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -68,18 +68,18 @@ class _MultiProversPageState extends State<MultiProversPage> {
   }
 
   Widget _buildBody(BodyState state) {
+    if (state.isLoading && !state.hasData) {
+      return const Center(child: CircularProgressIndicator());
+    }
     return ListView(
       children: [
         for (var i = 0; i < _providerCount; i++)
-          _buildListTile(i, state.byName<String>('Provider $i')),
+          _buildListTile(i, state.byName<String>('Provider $i')!),
       ],
     );
   }
 
-  Widget _buildListTile(int index, BodyState<String>? state) {
-    if (state == null) {
-      return const SizedBox();
-    }
+  Widget _buildListTile(int index, BodyState<String> state) {
     return ListTile(
       title: Text(
         state.data ?? 'No data',

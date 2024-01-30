@@ -2,6 +2,8 @@ import 'package:body_builder/body_builder/body_builder.dart';
 import 'package:body_builder_example/basic_sample_page.dart';
 import 'package:body_builder_example/custom_builder_page.dart';
 import 'package:body_builder_example/multi_providers_page.dart';
+import 'package:body_builder_example/paginated_page.dart';
+import 'package:body_builder_example/states.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -19,6 +21,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => BasicSampleState()),
         ChangeNotifierProvider(create: (_) => MultiProviderSampleState()),
+        ChangeNotifierProvider(create: (_) => PaginatedSampleState()),
       ],
       child: MaterialApp(
         theme: ThemeData(
@@ -89,11 +92,22 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             FilledButton(
               onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PaginatedPage(),
+                  ),
+                );
+              },
+              child: const Text('Paginated example'),
+            ),
+            FilledButton(
+              onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('TO-DO')),
                 );
               },
-              child: const Text('Paginated example'),
+              child: const Text('Search example'),
             ),
             const Divider(),
             FilledButton(
@@ -103,12 +117,13 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: () {
                 context.read<BasicSampleState>().clear();
                 context.read<MultiProviderSampleState>().clear();
+                context.read<PaginatedSampleState>().clear();
 
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('State cleared!')),
+                  const SnackBar(content: Text('All states cleared!')),
                 );
               },
-              child: const Text('Clear state'),
+              child: const Text('Clear states'),
             ),
           ],
         ),
