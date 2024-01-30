@@ -56,6 +56,11 @@ abstract class RelatedStateProvider<K, T> extends ChangeNotifier {
     return _states[id]!;
   }
 
+  T onFetch(K key, T item) {
+    byId(key).onFetch(item);
+    return item;
+  }
+
   void clear() {
     for (final SimpleStateProvider<T> state in _states.values) {
       state.clear();

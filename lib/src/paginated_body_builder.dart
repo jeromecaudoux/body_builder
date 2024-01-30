@@ -71,7 +71,7 @@ class PaginatedBodyBuilder<T> extends StatefulWidget {
 }
 
 class PaginatedBodyBuilderState<T> extends State<PaginatedBodyBuilder<T>> {
-  final GlobalKey<BodyBuilderState<T>> _key = GlobalKey();
+  final GlobalKey<PaginatedBodyBuilderState<T>> _key = GlobalKey();
 
   bool get hasError => _key.currentState?.hasError == true;
 
