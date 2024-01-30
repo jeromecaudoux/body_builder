@@ -1,24 +1,24 @@
 abstract class PaginatedBase<T> {
   /// The path of the API request or anything else that will be used in logs
-  String? path;
+  String? pPath;
 
   /// The items of the current page
-  Iterable<T>? items;
+  Iterable<T>? pItems;
 
   /// The current page index
-  int? currentPage;
+  int? pPage;
 
   /// The last page index
-  int? lastPage;
+  int? pLast;
 }
 
 class SinglePageState<T> extends PaginatedBase<T> {
   @override
-  int? get currentPage => 1;
+  int? get pPage => 1;
   @override
-  int? get lastPage => 1;
+  int? get pLast => 1;
 
   SinglePageState(Iterable<T>? items) {
-    this.items = items;
+    pItems = items;
   }
 }

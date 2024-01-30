@@ -163,33 +163,33 @@ class DataState<T> {
   }
 
   Iterable<T> onFetch(PaginatedBase<T> response) {
-    if (response.items?.isNotEmpty != true) {
+    if (response.pItems?.isNotEmpty != true) {
       if (_page < _lastPage) {
         debugPrint(
           'Inconsistent pagination of ${typeOf<T>()} detected. Page ${page + 1}'
           ' is empty but the last page should be $_lastPage. '
-          'Path: ${response.path}',
+          'Path: ${response.pPath}',
         );
       }
       // Avoid any loop with the api, force change the last page.
       // We add max(1, x), because 0 will make #hasMore always return true
-      _page = max(1, response.currentPage!);
+      _page = max(1, response.pPage!);
       _lastPage = _page;
       return _items;
     }
-    if ((response.currentPage ?? 0) != _page + 1) {
+    if ((response.pPage ?? 0) != _page + 1) {
       // We have received a page that we already got or that is not the next one, skip.
       debugPrint(
         'Inconsistent pagination of ${typeOf<T>()} detected. '
         'The current page is $_page, we expected the next page to be ${_page + 1} '
-        'but we got ${response.currentPage}. Path: ${response.path}',
+        'but we got ${response.pPage}. Path: ${response.pPath}',
       );
       return _items;
     }
-    _items.removeWhere((e) => response.items!.contains(e));
-    _items.addAll(response.items!);
-    _lastPage = response.lastPage!;
-    _page = response.currentPage!;
+    _items.removeWhere((e) => response.pItems!.contains(e));
+    _items.addAll(response.pItems!);
+    _lastPage = response.pLast!;
+    _page = response.pPage!;
     return _items;
   }
 }

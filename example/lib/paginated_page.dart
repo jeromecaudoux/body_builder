@@ -104,11 +104,11 @@ class PaginatedResponse<T> extends PaginatedBase<T> {
   final int _lastPage;
 
   @override
-  List<T>? get items => _items;
+  List<T>? get pItems => _items;
   @override
-  int? get currentPage => _currentPage;
+  int? get pPage => _currentPage;
   @override
-  int? get lastPage => _lastPage;
+  int? get pLast => _lastPage;
 
   PaginatedResponse(this._items, this._currentPage, this._lastPage);
 }
