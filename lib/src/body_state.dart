@@ -44,7 +44,7 @@ final class BodyState<T> {
 
   bool get hasData {
     if (combinedStates) {
-      for (BodyState state in data as Iterable) {
+      for (BodyState state in (data as Iterable?) ?? []) {
         if (state.hasData) {
           return true;
         }

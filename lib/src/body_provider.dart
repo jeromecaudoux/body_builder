@@ -180,7 +180,9 @@ extension ProviderExt on Iterable<BodyProviderBase> {
       return BodyState.error(errorState.error!, errorState.errorStack)
           .copy(data: states);
     }
-    return BodyState.loading().copy(data: states);
+    // todo: check ".copy(data: states)" is required or not
+    // I got an issue while loading many providers and an impl of builder(a, b)
+    return BodyState.loading();//.copy(data: states);
   }
 
   void _debugPrintStates(Iterable<BodyState<dynamic>> states) {
