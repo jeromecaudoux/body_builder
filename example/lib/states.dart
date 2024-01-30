@@ -1,4 +1,4 @@
-import 'package:body_builder/body_builder/body_builder.dart';
+import 'package:body_builder/body_builder.dart';
 
 class PaginatedSampleState extends PaginatedState<String> {}
 

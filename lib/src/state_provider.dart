@@ -1,7 +1,7 @@
 import 'dart:math';
 
-import 'package:body_builder/body_builder/src/paginated_response.dart';
-import 'package:body_builder/body_builder/src/typedefs_child_body_builder.dart';
+import 'package:body_builder/src/paginated_response.dart';
+import 'package:body_builder/src/typedefs_child_body_builder.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';

@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:developer';
 
-import 'package:body_builder/body_builder/src/body_builder.dart';
-import 'package:body_builder/body_builder/src/body_state.dart';
-import 'package:body_builder/body_builder/src/state_provider.dart';
+import 'package:body_builder/src/body_builder.dart';
+import 'package:body_builder/src/body_state.dart';
+import 'package:body_builder/src/state_provider.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:rxdart/rxdart.dart';

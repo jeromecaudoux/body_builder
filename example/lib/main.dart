@@ -1,4 +1,4 @@
-import 'package:body_builder/body_builder/body_builder.dart';
+import 'package:body_builder/body_builder.dart';
 import 'package:body_builder_example/basic_sample_page.dart';
 import 'package:body_builder_example/custom_builder_page.dart';
 import 'package:body_builder_example/multi_providers_page.dart';

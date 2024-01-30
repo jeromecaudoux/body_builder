@@ -1,4 +1,4 @@
-import 'package:body_builder/body_builder/src/body_builder.dart';
+import 'package:body_builder/src/body_builder.dart';
 import 'package:flutter/material.dart';
 
 class LoadMore extends StatefulWidget {

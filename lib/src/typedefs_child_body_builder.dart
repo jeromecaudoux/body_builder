@@ -1,4 +1,4 @@
-import 'package:body_builder/body_builder/src/body_state.dart';
+import 'package:body_builder/src/body_state.dart';
 import 'package:flutter/material.dart';
 
 @Deprecated('Use CustomChildBuilder instead')

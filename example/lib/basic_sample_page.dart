@@ -1,4 +1,4 @@
-import 'package:body_builder/body_builder/body_builder.dart';
+import 'package:body_builder/body_builder.dart';
 import 'package:body_builder_example/states.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
