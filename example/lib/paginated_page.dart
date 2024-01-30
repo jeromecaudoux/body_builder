@@ -74,7 +74,10 @@ class _PaginatedPageState extends State<PaginatedPage> {
   /// Any other value will result in the [PaginatedResponse] to be ignored.
   Future<Iterable<String>> _dataProvider(String? query) {
     return Future.delayed(const Duration(seconds: 2), () {
-      int page = _state.get(query ?? '').page + 1;
+      /// The first page must be 1. the default value is 0 so you can always
+      /// pass "lastPage + 1" to [PaginatedResponse].
+      int lastPage = _state.get(query ?? '').page;
+
       /// Uncomment this to test the error handling mechanism
       // if (page == 2) {
       //   throw Exception(
@@ -85,9 +88,9 @@ class _PaginatedPageState extends State<PaginatedPage> {
         [
           /// Generate dummy paginated data
           for (int i = 0; i < _itemsPerPage; i++)
-            'Value ${_state.get(query ?? '').page * _itemsPerPage + i}',
+            'Value ${lastPage * _itemsPerPage + i}',
         ],
-        page,
+        lastPage + 1,
         5,
       );
     }).then((response) => _state.onFetch(query ?? '', response));
