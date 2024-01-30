@@ -1,4 +1,4 @@
-mixin class PaginatedBase<T> {
+abstract class PaginatedBase<T> {
   /// The path of the API request or anything else that will be used in logs
   String? path;
 
@@ -12,15 +12,13 @@ mixin class PaginatedBase<T> {
   int? lastPage;
 }
 
-class SinglePageState<T> with PaginatedBase<T> {
-  final Iterable<T> data;
-
-  @override
-  Iterable<T>? get items => data;
+class SinglePageState<T> extends PaginatedBase<T> {
   @override
   int? get currentPage => 1;
   @override
   int? get lastPage => 1;
 
-  SinglePageState(this.data);
+  SinglePageState(Iterable<T>? items) {
+    this.items = items;
+  }
 }

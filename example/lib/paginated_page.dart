@@ -98,7 +98,7 @@ class _PaginatedPageState extends State<PaginatedPage> {
 
 /// This is a simple implementation of [PaginatedBase]
 /// Override [items], [currentPage] and [lastPage] to implement your own logic
-class PaginatedResponse<T> with PaginatedBase<T> {
+class PaginatedResponse<T> extends PaginatedBase<T> {
   final List<T> _items;
   final int _currentPage;
   final int _lastPage;
