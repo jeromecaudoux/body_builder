@@ -67,6 +67,9 @@ abstract class RelatedStateProvider<K, T> extends ChangeNotifier {
     }
     _states.clear();
   }
+
+  T? where(bool Function(T?) test) =>
+      _states.values.firstWhereOrNull((state) => test(state._item))?._item;
 }
 
 abstract class RelatedPaginatedStates<K, T> extends ChangeNotifier {
