@@ -277,12 +277,29 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
     );
   }
 
-  Future<void> retry({bool allowState = false}) => fetch(
-        allowState: allowState,
-        allowCache: true,
-        allowData: true,
-        clearData: true,
-      );
+  /// Will re-execute the providers.
+  /// If [waitNextFrame] is true, the fetch will be executed on the next frame.
+  /// Otherwise it will be executed immediately.
+  /// [waitNextFrame] is useful when you want to call [retry] just after a
+  /// [setState] call, without having to worry about the providers not being
+  /// updated (at the next rebuild).
+  void retry({bool allowState = false, bool waitNextFrame = true}) {
+    task() => fetch(
+          allowState: allowState,
+          allowCache: true,
+          allowData: true,
+          clearData: true,
+        );
+    if (waitNextFrame) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          task();
+        }
+      });
+    } else {
+      task();
+    }
+  }
 
   Future<void> fetch({
     bool allowState = false,

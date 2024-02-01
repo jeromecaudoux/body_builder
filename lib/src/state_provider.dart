@@ -17,7 +17,7 @@ abstract class StateProvider<T> extends ChangeNotifier {
 
   bool hasMore([String? query]) => false;
 
-  void clear() => throw UnimplementedError();
+  void clear() {}
 }
 
 class SimpleStateProvider<T> extends StateProvider<T> {
