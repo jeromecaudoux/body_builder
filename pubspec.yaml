@@ -1,7 +1,7 @@
 name: body_builder
-description: "A new Flutter package project."
-version: 0.0.1
-homepage:
+description: "BodyBuilder is a widget that manage the loading of your data"
+version: 1.0.0
+homepage: https://github.com/jeromecaudoux/body_builder/
 
 environment:
   sdk: '>=3.2.5 <4.0.0'
