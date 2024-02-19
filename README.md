@@ -31,7 +31,7 @@ BodyBuilder(
 );
 ```
 
-If you want to display a manage the loading and error widget yourself, you can use the customBuilder and use the BodyState to display the right widget:
+If you want to manage the loading and error widget yourself, you can use the customBuilder and use the BodyState to display the right widget:
 ```dart
 BodyBuilder(
     key: _key,
@@ -47,7 +47,8 @@ BodyBuilder(
 ```
 
 You can override the default loading and error widget by using the loadingBuilder and errorBuilder.
-You can also configure all BoyBuilder by using BodyBuilder.setDefaultConfig.
+
+You can also configure all BodyBuilder by using **BodyBuilder.setDefaultConfig**.
 
 ## How it works
 
