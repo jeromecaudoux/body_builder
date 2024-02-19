@@ -1,6 +1,6 @@
 BodyBuilder is a widget that manage the loading of your data. For each situation the widget will rebuild with a BodyState containing all the necessary information to display the right widget.
 
-<img src="https://github.com/jeromecaudoux/body_builder/blob/main/files/sample.gif" width="300" />
+<img src="https://raw.githubusercontent.com/jeromecaudoux/body_builder/main/files/sample.gif" width="300" />
 
 ## Before you begin
 
@@ -21,7 +21,6 @@ Here is a simple example of how to use the BodyBuilder widget.
 If you want to let the BodyBuilder display a loading and error widget:
 ```dart
 BodyBuilder(
-    key: _key,
     providers: [
         BodyProvider(
             state: _state,
@@ -33,7 +32,7 @@ BodyBuilder(
 );
 ```
 
-If you want to manage the loading and error widget yourself, you can use the customBuilder and use the BodyState to display the right widget:
+If you want to manage the loading and error widget yourself, you can use the customBuilder which provides a BodyState to display the right widget:
 ```dart
 BodyBuilder(
     key: _key,
@@ -54,7 +53,7 @@ You can also configure all BodyBuilder by using **BodyBuilder.setDefaultConfig**
 
 ## How it works
 
-<img src="https://github.com/jeromecaudoux/body_builder/blob/main/files/diagram.jpg" width="600" />
+<img src="https://raw.githubusercontent.com/jeromecaudoux/body_builder/main/files/diagram.jpg" width="600" />
 
 ## StateProvider
 
