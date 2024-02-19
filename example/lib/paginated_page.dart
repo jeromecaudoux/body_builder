@@ -78,7 +78,7 @@ class _PaginatedPageState extends State<PaginatedPage> {
       int lastPage = _state.get(query).page;
 
       /// Uncomment this to test the error handling mechanism
-      // if (page == 2) {
+      // if (lastPage == 2) {
       //   throw Exception(
       //     'When the code decides to cha-cha, we\'ve got a bug with dance moves!',
       //   );

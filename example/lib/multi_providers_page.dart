@@ -90,12 +90,13 @@ class _MultiProversPageState extends State<MultiProversPage> {
                 : null,
       ),
       subtitle: Text('Provider $index'),
-      trailing: !state.isLoading
-          ? null
-          : const SizedBox.square(
+      trailing: state.isLoading
+          ? const SizedBox.square(
               dimension: 16,
               child: CircularProgressIndicator(strokeWidth: 2),
-            ),
+            ) : state.hasError
+              ? const Icon(Icons.error, color: Colors.red)
+              : const Icon(Icons.check, color: Colors.green),
     );
   }
 
