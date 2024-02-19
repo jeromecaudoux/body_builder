@@ -1,5 +1,7 @@
 BodyBuilder is a widget that manage the loading of your data. For each situation the widget will rebuild with a BodyState containing all the necessary information to display the right widget.
 
+<img src="https://github.com/jeromecaudoux/body_builder/blob/main/files/sample.gif" width="300" />
+
 ## Before you begin
 
 BodyBuilder manage the loading of your data by 3 different ways: state, cache and data:
