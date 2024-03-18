@@ -54,7 +54,16 @@ class _PaginatedPageState extends State<PaginatedPage> {
           /// when it is displayed on screen.
           /// - It has a simple error handling mechanism with a retry button and
           /// circular progress indicator.
-          return LoadMore(_key);
+          return LoadMore(
+            _key,
+            // useButton: true,
+            // loadMoreBuilder: (callback) => Center(
+            //   child: TextButton(
+            //     onPressed: callback,
+            //     child: const Text('Load more (builder)'),
+            //   ),
+            // ),
+          );
         }
         return ListTile(title: Text(items.elementAt(index)));
       },

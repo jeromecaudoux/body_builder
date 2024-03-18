@@ -425,12 +425,12 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
   }
 
   void loadMoreIfNeeded() {
-    if (_hasMore()) {
+    if (hasMore()) {
       fetch();
     }
   }
 
-  bool _hasMore() {
+  bool hasMore() {
     Iterable<BodyProvider> result = providers.where((e) => e.isPaginated);
     assert(
       result.length == 1,
