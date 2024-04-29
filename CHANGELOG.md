@@ -1,3 +1,7 @@
+## 1.0.3
+
+* Add missing calls to `notifyListeners()` in `RelatedStateProvider`
+
 ## 1.0.2
 
 * The method `BodyBuilder#_hasMore()` is now public: `BodyBuilder#hasMore()`

@@ -58,6 +58,7 @@ abstract class RelatedStateProvider<K, T> extends ChangeNotifier {
 
   T onFetch(K key, T item) {
     byId(key).onFetch(item);
+    notifyListeners();
     return item;
   }
 
@@ -66,6 +67,7 @@ abstract class RelatedStateProvider<K, T> extends ChangeNotifier {
       state.clear();
     }
     _states.clear();
+    notifyListeners();
   }
 
   T? where(bool Function(T?) test) =>
