@@ -90,36 +90,40 @@ class PaginatedState<T> extends StateProvider<Iterable<T>> {
   final Map<String, DataState<T>> _states = {};
 
   @override
-  Iterable<T> items([String? query]) => get(_toKey(query)).items;
+  Iterable<T> items([String? query]) => get(normalizeQuery(query)).items;
 
   @override
-  bool hasData([String? query]) => get(_toKey(query)).items.isNotEmpty;
+  bool hasData([String? query]) => get(normalizeQuery(query)).items.isNotEmpty;
 
   @override
-  bool hasMore([String? query]) => get(_toKey(query)).hasMore;
+  bool hasMore([String? query]) => get(normalizeQuery(query)).hasMore;
 
-  DataState<T> get(String? query) => _states[_toKey(query)] ??= DataState();
+  DataState<T> get(String? query) =>
+      _states[normalizeQuery(query)] ??= DataState();
 
   Iterable<T> onFetch(String? query, PaginatedBase<T> response) =>
       get(query).onFetch(response);
 
-  String _toKey(String? query) => query?.toLowerCase().trim() ?? '';
+  String normalizeQuery(String? query) => query?.toLowerCase().trim() ?? '';
 
   @override
   void clear() => _states.clear();
 
-  void add(String query, T item) {
+  T add(String query, T item) {
     get(query).remove(item);
     get(query).insert(0, item);
     notifyListeners();
+    return item;
   }
+
+  Iterable<String> get queries => _states.keys;
 
   void removeWhere(String query, bool Function(T element) test) {
     get(query).removeWhere(test);
     notifyListeners();
   }
 
-  void remove([String? query]) => _states.remove(_toKey(query));
+  void remove([String? query]) => _states.remove(normalizeQuery(query));
 
   T? where(bool Function(T) test) =>
       _states.values.expand((element) => element.items).firstWhereOrNull(test);
@@ -133,10 +137,9 @@ class DataState<T> {
   int _lastPage = 0;
 
   Iterable<T> get items => _items;
-
   bool get hasMore => _lastPage == 0 || _page < _lastPage;
-
   int get page => _page;
+  int get lastPage => _lastPage;
 
   T add(T item) {
     _items.add(item);
@@ -148,7 +151,7 @@ class DataState<T> {
     return item;
   }
 
-  void remove(T item) => _items.remove(item);
+  bool remove(T item) => _items.remove(item);
 
   void removeWhere(bool Function(T element) test) => _items.removeWhere(test);
 
@@ -158,18 +161,22 @@ class DataState<T> {
     return item;
   }
 
+  bool has(T item) => _items.contains(item);
+
   T updateOrAddFirst(T item) {
     remove(item);
     _items.insert(0, item);
     return item;
   }
 
-  void update(T item) {
+  bool update(T item) {
     final int index = _items.indexWhere((element) => element == item);
 
     if (index >= 0) {
       _items[index] = item;
+      return true;
     }
+    return false;
   }
 
   Iterable<T> onFetch(PaginatedBase<T> response) {

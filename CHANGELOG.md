@@ -1,3 +1,10 @@
+## 1.0.4
+
+* Add method `normalizeQuery(String? query)` to `PaginatedState` for more flexible query
+  normalization
+* Add static getter `Iterable<String> get queries` to `PaginatedState`
+* Add method `bool has(T item)` to `DataState`
+
 ## 1.0.3
 
 * Add missing calls to `notifyListeners()` in `RelatedStateProvider`
