@@ -7,8 +7,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 typedef StateConvertor<T, C extends ChangeNotifier> = T? Function(
-  C changeNotifier,
-);
+    C changeNotifier);
 
 abstract class StateProvider<T> extends ChangeNotifier {
   T? items([String? query]);
@@ -107,8 +106,11 @@ class PaginatedState<T> extends StateProvider<Iterable<T>> {
   DataState<T> get(String? query) =>
       _states[normalizeQuery(query)] ??= DataState();
 
-  Iterable<T> onFetch(String? query, PaginatedBase<T> response) =>
-      get(query).onFetch(response);
+  Iterable<T> onFetch(String? query, PaginatedBase<T> response) {
+    Iterable<T> items = get(query).onFetch(response);
+    notifyListeners();
+    return items;
+  }
 
   String normalizeQuery(String? query) => query?.toLowerCase().trim() ?? '';
 
@@ -153,10 +155,10 @@ class PaginatedState<T> extends StateProvider<Iterable<T>> {
     bool updated = false;
     for (final DataState<T> state in _states.values) {
       if (state.update(item, addIfMissing: addIfMissing, addFirst: addFirst)) {
-        notifyListeners();
         updated = true;
       }
     }
+    notifyListeners();
     return updated;
   }
 
@@ -185,17 +187,29 @@ class DataState<T> {
 
   T add(T item) {
     _items.add(item);
+    _incrementCount(1);
     return item;
   }
 
   T insert(int index, T item) {
     _items.insert(index, item);
+    _incrementCount(1);
     return item;
   }
 
-  bool remove(T item) => _items.remove(item);
+  bool remove(T item) {
+    bool removed = _items.remove(item);
+    if (removed) {
+      _incrementCount(-1);
+    }
+    return removed;
+  }
 
-  void removeWhere(bool Function(T element) test) => _items.removeWhere(test);
+  void removeWhere(bool Function(T element) test) {
+    int startLength = _items.length;
+    _items.removeWhere(test);
+    _incrementCount(startLength - _items.length);
+  }
 
   bool has(T item) => _items.contains(item);
 
@@ -212,6 +226,7 @@ class DataState<T> {
       } else {
         _items.add(item);
       }
+      _incrementCount(1);
     }
     return false;
   }
