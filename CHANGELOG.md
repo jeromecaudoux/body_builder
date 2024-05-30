@@ -1,3 +1,7 @@
+## 1.0.6
+
+* `PaginatedBase` and `PaginatedState` now support `nbHits` to help keeping track of a counter.
+
 ## 1.0.5
 
 * In `BodyProvider#resolve` in order to avoid being in a situation with no data, `allowData` is now
