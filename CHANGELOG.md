@@ -1,3 +1,7 @@
+## 1.0.7
+
+* `nbHits` Increment nbHits on state changes.
+
 ## 1.0.6
 
 * `PaginatedBase` and `PaginatedState` now support `nbHits` to help keeping track of a counter.
