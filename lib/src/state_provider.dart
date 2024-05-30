@@ -49,6 +49,8 @@ abstract class RelatedStateProvider<K, T> extends ChangeNotifier {
 
   RelatedStateProvider();
 
+  Iterable<K> get keys => _states.keys;
+
   SimpleStateProvider<T> byId(K id) {
     if (!_states.containsKey(id)) {
       _states[id] = SimpleStateProvider<T>();
@@ -76,6 +78,8 @@ abstract class RelatedStateProvider<K, T> extends ChangeNotifier {
 
 abstract class RelatedPaginatedStates<K, T> extends ChangeNotifier {
   final Map<K, PaginatedState<T>> _states = {};
+
+  Iterable<K> get keys => _states.keys;
 
   RelatedPaginatedStates();
 
@@ -116,16 +120,50 @@ class PaginatedState<T> extends StateProvider<Iterable<T>> {
     return item;
   }
 
-  Iterable<String> get queries => _states.keys;
+  Iterable<String> get keys => _states.keys;
 
-  void removeWhere(String query, bool Function(T element) test) {
-    get(query).removeWhere(test);
+  void removeItemWhere(bool Function(T element) test, {String? query}) {
+    if (query != null) {
+      get(query).removeWhere(test);
+    } else {
+      for (final DataState<T> state in _states.values) {
+        state.removeWhere(test);
+      }
+    }
     notifyListeners();
   }
 
-  void remove([String? query]) => _states.remove(normalizeQuery(query));
+  bool removeItem(T item, {String? query}) {
+    if (query != null) {
+      return get(query).remove(item);
+    }
+    bool removed = false;
+    for (final DataState<T> state in _states.values) {
+      if (state.remove(item)) {
+        notifyListeners();
+        removed = true;
+      }
+    }
+    return removed;
+  }
 
-  T? where(bool Function(T) test) =>
+  bool updateItem(T item, {bool addIfMissing = true, bool addFirst = true}) {
+    bool updated = false;
+    for (final DataState<T> state in _states.values) {
+      if (state.update(item, addIfMissing: addIfMissing, addFirst: addFirst)) {
+        notifyListeners();
+        updated = true;
+      }
+    }
+    return updated;
+  }
+
+  void remove([String? query]) {
+    _states.remove(normalizeQuery(query));
+    notifyListeners();
+  }
+
+  T? itemWhere(bool Function(T) test) =>
       _states.values.expand((element) => element.items).firstWhereOrNull(test);
 }
 
@@ -155,26 +193,21 @@ class DataState<T> {
 
   void removeWhere(bool Function(T element) test) => _items.removeWhere(test);
 
-  T updateOrAdd(T item) {
-    _items.remove(item);
-    add(item);
-    return item;
-  }
-
   bool has(T item) => _items.contains(item);
 
-  T updateOrAddFirst(T item) {
-    remove(item);
-    _items.insert(0, item);
-    return item;
-  }
-
-  bool update(T item) {
+  bool update(T item, {bool addIfMissing = true, bool addFirst = true}) {
     final int index = _items.indexWhere((element) => element == item);
 
     if (index >= 0) {
       _items[index] = item;
       return true;
+    }
+    if (addIfMissing) {
+      if (addFirst) {
+        _items.insert(0, item);
+      } else {
+        _items.add(item);
+      }
     }
     return false;
   }

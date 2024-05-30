@@ -1,6 +1,6 @@
 name: body_builder
 description: "BodyBuilder is a widget that manage the loading of your data"
-version: 1.0.4
+version: 1.0.5
 homepage: https://github.com/jeromecaudoux/body_builder/
 
 environment:
@@ -17,7 +17,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.2
+  flutter_lints: ^4.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

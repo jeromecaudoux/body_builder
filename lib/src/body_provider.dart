@@ -81,7 +81,8 @@ class BodyProvider<T> extends BodyProviderBase<T> {
       yield BodyState.data(state!.items(query));
       return;
     }
-    yield* _loadAfterState(query, allowCache, allowData);
+    // allowData is set to true (by force) to avoid being in a situation with no data
+    yield* _loadAfterState(query, allowCache, true);
   }
 
   Stream<BodyState<T>> _loadAfterState(
@@ -182,7 +183,7 @@ extension ProviderExt on Iterable<BodyProviderBase> {
     }
     // todo: check ".copy(data: states)" is required or not
     // I got an issue while loading many providers and an impl of builder(a, b)
-    return BodyState.loading();//.copy(data: states);
+    return BodyState.loading(); //.copy(data: states);
   }
 
   void _debugPrintStates(Iterable<BodyState<dynamic>> states) {

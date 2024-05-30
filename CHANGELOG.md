@@ -1,3 +1,8 @@
+## 1.0.5
+
+* In `BodyProvider#resolve` in order to avoid being in a situation with no data, `allowData` is now
+  set to true (by force) if the state has no data.
+
 ## 1.0.4
 
 * Add method `normalizeQuery(String? query)` to `PaginatedState` for more flexible query
