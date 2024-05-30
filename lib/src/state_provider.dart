@@ -102,6 +102,8 @@ class PaginatedState<T> extends StateProvider<Iterable<T>> {
   @override
   bool hasMore([String? query]) => get(normalizeQuery(query)).hasMore;
 
+  int? nbHits(String query) => get(query).nbHits;
+
   DataState<T> get(String? query) =>
       _states[normalizeQuery(query)] ??= DataState();
 
@@ -173,11 +175,13 @@ class DataState<T> {
   final List<T> _items = [];
   int _page = 0;
   int _lastPage = 0;
+  int? _nbHits;
 
   Iterable<T> get items => _items;
   bool get hasMore => _lastPage == 0 || _page < _lastPage;
   int get page => _page;
   int get lastPage => _lastPage;
+  int? get nbHits => _nbHits;
 
   T add(T item) {
     _items.add(item);
@@ -240,7 +244,19 @@ class DataState<T> {
     _items.addAll(response.pItems!);
     _lastPage = response.pLast!;
     _page = response.pPage!;
+    _nbHits = response.nbHits;
     return _items;
+  }
+
+  void _incrementCount(int count) {
+    if (_nbHits == null || count == 0) {
+      return;
+    }
+    setItemsCount(_nbHits! + count);
+  }
+
+  void setItemsCount(int? count) {
+    _nbHits = count == null ? null : max(0, count);
   }
 }
 

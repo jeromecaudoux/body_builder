@@ -10,6 +10,8 @@ abstract class PaginatedBase<T> {
 
   /// The last page index
   int? pLast;
+
+  int? nbHits;
 }
 
 class SinglePageState<T> extends PaginatedBase<T> {
