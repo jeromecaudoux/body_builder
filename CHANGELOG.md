@@ -1,6 +1,6 @@
-## 1.0.7
+## 1.0.8
 
-* `nbHits` Increment nbHits on state changes.
+* Fix issue with nbHits not being updated when no data are available
 
 ## 1.0.6
 

@@ -264,11 +264,9 @@ class DataState<T> {
   }
 
   void _incrementCount(int count) {
-    if (_nbHits == null || count == 0) {
-      return;
-    }
-    setItemsCount(_nbHits! + count);
+    setItemsCount((_nbHits ?? 0) + count);
   }
+
 
   void setItemsCount(int? count) {
     _nbHits = count == null ? null : max(0, count);
