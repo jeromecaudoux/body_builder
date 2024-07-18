@@ -1,3 +1,11 @@
+## 1.0.9
+
+* `onBeforeRefresh` is now a VoidCallback? instead of a ValueChanged<T?>?
+* `onRefresh` is now a VoidCallback? instead of a ValueChanged<T?>?
+* Fix method `hasData` in `BodyState` when there are more than one provider
+* Fix method `clear` in `RelatedPaginatedStates` and `StateProvider`. `notifyListeners` is now called after the clear
+  operation
+
 ## 1.0.8
 
 * Fix issue with nbHits not being updated when no data are available

@@ -36,7 +36,7 @@ class PaginatedBodyBuilder<T> extends StatefulWidget {
   @Deprecated('Not used anymore')
   final bool placeHolderTopSpace;
   final Duration? animationDuration;
-  final ValueChanged<T?>? onRefresh;
+  final VoidCallback? onRefresh;
 
   const PaginatedBodyBuilder({
     this.searchController,

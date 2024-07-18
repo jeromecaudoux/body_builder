@@ -84,7 +84,10 @@ abstract class RelatedPaginatedStates<K, T> extends ChangeNotifier {
 
   PaginatedState<T> byId(K id) => _states[id] ??= PaginatedState<T>();
 
-  void clear() => _states.clear();
+  void clear() {
+    _states.clear();
+    notifyListeners();
+  }
 }
 
 class PaginatedState<T> extends StateProvider<Iterable<T>> {
@@ -115,7 +118,10 @@ class PaginatedState<T> extends StateProvider<Iterable<T>> {
   String normalizeQuery(String? query) => query?.toLowerCase().trim() ?? '';
 
   @override
-  void clear() => _states.clear();
+  void clear() {
+    _states.clear();
+    notifyListeners();
+  }
 
   T add(String query, T item) {
     get(query).remove(item);

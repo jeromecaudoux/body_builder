@@ -50,7 +50,7 @@ class BodyBuilder<T> extends StatefulWidget {
   final Duration? animationDuration;
   final TextEditingController? searchController;
   final ScrollController? scrollController;
-  final ValueChanged<T?>? onBeforeRefresh;
+  final VoidCallback? onBeforeRefresh;
   final Duration searchFetchDelay;
 
   const BodyBuilder({
@@ -377,7 +377,7 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
 
   void _onRefresh() {
     if (widget.onBeforeRefresh != null) {
-      widget.onBeforeRefresh?.call(_state.data);
+      widget.onBeforeRefresh?.call();
     } else {
       providers
           .map((e) => e.state)
