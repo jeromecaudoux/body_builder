@@ -1,3 +1,7 @@
+## 1.0.10
+
+* Fix `setState() called after dispose()` in BodyBuilderState
+
 ## 1.0.9
 
 * `onBeforeRefresh` is now a VoidCallback? instead of a ValueChanged<T?>?

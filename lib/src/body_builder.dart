@@ -343,6 +343,9 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
   }
 
   bool _initialState() {
+    if (!mounted) {
+      return true;
+    }
     BodyState? state =
         providers.initialState(widget.searchController?.text ?? '');
     if (state.hasData) {
