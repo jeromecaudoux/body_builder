@@ -117,7 +117,7 @@ class _MyHomePageState extends State<MyHomePage> {
             const Divider(),
             FilledButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all(Colors.orange),
+                backgroundColor: WidgetStateProperty.all(Colors.orange),
               ),
               onPressed: () {
                 context.read<BasicSampleState>().clear();

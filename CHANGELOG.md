@@ -1,3 +1,7 @@
+## 1.0.11
+
+* Bump `rxdart` and `collection` versions
+
 ## 1.0.10
 
 * Fix `setState() called after dispose()` in BodyBuilderState
