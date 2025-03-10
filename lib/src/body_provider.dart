@@ -136,15 +136,24 @@ class BodyProvider<T> extends BodyProviderBase<T> {
 }
 
 extension ProviderExt on Iterable<BodyProviderBase> {
-  BodyState initialState(String? query) => _merge(map(
-          (state) => state.initialState(query).copy(providerName: state.name)))
-      .copy(combinedStates: true);
+  BodyState initialState(
+    String? query, {
+    BodyProviderMergeDataStrategy mergeStrategy =
+        BodyProviderMergeDataStrategy.allAtOne,
+  }) {
+    return _merge(
+      map((state) => state.initialState(query).copy(providerName: state.name)),
+      mergeStrategy,
+    ).copy(combinedStates: true);
+  }
 
   Stream<BodyState> resolve({
     String? query,
     bool allowState = true,
     bool allowCache = true,
     bool allowData = true,
+    BodyProviderMergeDataStrategy mergeStrategy =
+        BodyProviderMergeDataStrategy.allAtOne,
   }) {
     return Rx.combineLatest(
       map(
@@ -157,11 +166,14 @@ extension ProviderExt on Iterable<BodyProviderBase> {
             )
             .map((BodyState event) => event.copy(providerName: provider.name)),
       ),
-      _merge,
+      (Iterable<BodyState> states) => _merge(states, mergeStrategy),
     ).map((event) => event.copy(combinedStates: true));
   }
 
-  BodyState _merge(Iterable<BodyState> states) {
+  BodyState _merge(
+    Iterable<BodyState> states,
+    BodyProviderMergeDataStrategy strategy,
+  ) {
     if (kDebugMode && BodyBuilderConfig.instance.debugLogsEnabled) {
       _debugPrintStates(states);
     }
@@ -181,9 +193,12 @@ extension ProviderExt on Iterable<BodyProviderBase> {
       return BodyState.error(errorState.error!, errorState.errorStack)
           .copy(data: states);
     }
-    // todo: check ".copy(data: states)" is required or not
-    // I got an issue while loading many providers and an impl of builder(a, b)
-    return BodyState.loading(); //.copy(data: states);
+    switch (strategy) {
+      case BodyProviderMergeDataStrategy.allAtOne:
+        return BodyState.loading();
+      case BodyProviderMergeDataStrategy.oneByOne:
+        return BodyState.loading().copy(data: states);
+    }
   }
 
   void _debugPrintStates(Iterable<BodyState<dynamic>> states) {
@@ -194,4 +209,15 @@ extension ProviderExt on Iterable<BodyProviderBase> {
     }
     log('--- BodyBuilder -> OnEvent End ---');
   }
+}
+
+/// Strategy to merge data from multiple providers
+/// - [allAtOne] - Emit a "loading state" without data until all providers have
+/// data. Then emit a "data state" with all providers data
+/// - [oneByOne] - A "loading state" is emitted along with the data of each
+/// provider until all providers have data. Then emit a "data state" with all
+/// providers data.
+enum BodyProviderMergeDataStrategy {
+  allAtOne,
+  oneByOne,
 }

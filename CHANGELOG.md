@@ -1,3 +1,7 @@
+## 1.0.12
+
+* Add a new parameter `BodyProviderMergeDataStrategy` to allow different strategies when merging all providers data
+
 ## 1.0.11
 
 * Bump `rxdart` and `collection` versions

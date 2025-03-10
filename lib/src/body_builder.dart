@@ -52,6 +52,7 @@ class BodyBuilder<T> extends StatefulWidget {
   final ScrollController? scrollController;
   final VoidCallback? onBeforeRefresh;
   final Duration searchFetchDelay;
+  final BodyProviderMergeDataStrategy mergeDataStrategy;
 
   const BodyBuilder({
     this.showAppBarOnLoadingAndPlaceholder = false,
@@ -72,6 +73,7 @@ class BodyBuilder<T> extends StatefulWidget {
     this.childWrapper,
     this.builder,
     this.onBeforeRefresh,
+    this.mergeDataStrategy = BodyProviderMergeDataStrategy.allAtOne,
     this.searchFetchDelay = const Duration(milliseconds: 400),
     super.key,
   })  : assert(
@@ -329,6 +331,7 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
             allowState: allowState,
             allowCache: allowCache,
             allowData: allowData,
+            mergeStrategy: widget.mergeDataStrategy,
           )
           .listen(_onState, onError: _onError);
       await _subscription?.asFuture();
