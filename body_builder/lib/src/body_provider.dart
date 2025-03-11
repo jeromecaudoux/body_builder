@@ -38,7 +38,7 @@ class BodyProvider<T> extends BodyProviderBase<T> {
     super.name,
   });
 
-  bool get isPaginated => state != null && state is PaginatedState;
+  bool get isPaginated => state?.isPaginated == true;
 
   @override
   BodyState<T> initialState(String? query) {

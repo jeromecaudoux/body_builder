@@ -104,20 +104,3 @@ class _PaginatedPageState extends State<PaginatedPage> {
     }).then((response) => _state.onFetch(query, response));
   }
 }
-
-/// This is a simple implementation of [PaginatedBase]
-/// Override [items], [currentPage] and [lastPage] to implement your own logic
-class PaginatedResponse<T> extends PaginatedBase<T> {
-  final List<T> _items;
-  final int _currentPage;
-  final int _lastPage;
-
-  @override
-  List<T>? get pItems => _items;
-  @override
-  int? get pPage => _currentPage;
-  @override
-  int? get pLast => _lastPage;
-
-  PaginatedResponse(this._items, this._currentPage, this._lastPage);
-}

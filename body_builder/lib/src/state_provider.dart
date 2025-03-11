@@ -10,6 +10,9 @@ typedef StateConvertor<T, C extends ChangeNotifier> = T? Function(
     C changeNotifier);
 
 abstract class StateProvider<T> extends ChangeNotifier {
+
+  bool get isPaginated => false;
+
   T? items([String? query]);
 
   bool hasData([String? query]);
@@ -94,6 +97,9 @@ class PaginatedState<T> extends StateProvider<Iterable<T>> {
   PaginatedState();
 
   final Map<String, DataState<T>> _states = {};
+
+  @override
+  bool get isPaginated => true;
 
   @override
   Iterable<T> items([String? query]) => get(normalizeQuery(query)).items;
@@ -310,3 +316,54 @@ extension ChangeNotifierExt<C extends ChangeNotifier> on C {
   StateProvider<T> map<T>(StateConvertor<T, C> state) =>
       CustomStateProvider<T, C>(changeNotifier: this, convertor: state);
 }
+
+
+typedef ExternalStateData<T> = T? Function([String? query]);
+typedef ExternalHasMore<T> = bool Function([String? query]);
+
+class ExternalStateProvider<T> extends StateProvider<T> {
+  final ExternalStateData externalData;
+  final ExternalHasMore? externalHasMore;
+  final VoidCallback? onClear;
+  final ValueChanged<VoidCallback>? onAddListener;
+  final ValueChanged<VoidCallback>? onRemoveListener;
+
+  ExternalStateProvider.from(
+      this.externalData, {
+        this.externalHasMore,
+        this.onClear,
+        this.onAddListener,
+        this.onRemoveListener,
+      }) {
+    assert(
+    onAddListener == null || onRemoveListener != null,
+    'onRemoveListener must be provided if onAddListener is provided',
+    );
+  }
+
+  @override
+  bool get isPaginated => externalHasMore != null;
+
+  @override
+  void addListener(VoidCallback listener) => onAddListener?.call(listener);
+
+  @override
+  void removeListener(VoidCallback listener) =>
+      onRemoveListener?.call(listener);
+
+  @override
+  T? items([String? query]) => externalData(query);
+
+  @override
+  bool hasMore([String? query]) => externalHasMore?.call(query) ?? false;
+
+  @override
+  bool hasData([String? query]) {
+    T? data = items(query);
+    return isPaginated ? (data as Iterable?)?.isNotEmpty == true : data != null;
+  }
+
+  @override
+  void clear() => onClear?.call();
+}
+
