@@ -10,7 +10,6 @@ typedef StateConvertor<T, C extends ChangeNotifier> = T? Function(
     C changeNotifier);
 
 abstract class StateProvider<T> extends ChangeNotifier {
-
   bool get isPaginated => false;
 
   T? items([String? query]);
@@ -78,7 +77,7 @@ abstract class RelatedStateProvider<K, T> extends ChangeNotifier {
       _states.values.firstWhereOrNull((state) => test(state._item))?._item;
 }
 
-abstract class RelatedPaginatedStates<K, T> extends ChangeNotifier {
+class RelatedPaginatedStates<K, T> extends ChangeNotifier {
   final Map<K, PaginatedState<T>> _states = {};
 
   Iterable<K> get keys => _states.keys;
@@ -115,8 +114,12 @@ class PaginatedState<T> extends StateProvider<Iterable<T>> {
   DataState<T> get(String? query) =>
       _states[normalizeQuery(query)] ??= DataState();
 
-  Iterable<T> onFetch(String? query, PaginatedBase<T> response) {
-    Iterable<T> items = get(query).onFetch(response);
+  @Deprecated('Use "on" instead')
+  Iterable<T> onFetch(String? query, PaginatedBase<T> response) =>
+      on(response, query: query);
+
+  Iterable<T> on(PaginatedBase<T> response, {String? query}) {
+    Iterable<T> items = get(query).on(response);
     notifyListeners();
     return items;
   }
@@ -190,12 +193,14 @@ class DataState<T> {
   int _page = 0;
   int _lastPage = 0;
   int? _nbHits;
+  PaginatedBase<T>? _lastResponse;
 
   Iterable<T> get items => _items;
   bool get hasMore => _lastPage == 0 || _page < _lastPage;
   int get page => _page;
   int get lastPage => _lastPage;
   int? get nbHits => _nbHits;
+  PaginatedBase<T>? get lastResponse => _lastResponse;
 
   T add(T item) {
     _items.add(item);
@@ -243,22 +248,11 @@ class DataState<T> {
     return false;
   }
 
-  Iterable<T> onFetch(PaginatedBase<T> response) {
-    if (response.pItems?.isNotEmpty != true) {
-      if (_page < _lastPage) {
-        debugPrint(
-          'Inconsistent pagination of ${typeOf<T>()} detected. Page ${page + 1}'
-          ' is empty but the last page should be $_lastPage. '
-          'Path: ${response.pPath}',
-        );
-      }
-      // Avoid any loop with the api, force change the last page.
-      // We add max(1, x), because 0 will make #hasMore always return true
-      _page = max(1, response.pPage!);
-      _lastPage = _page;
-      return _items;
-    }
-    if ((response.pPage ?? 0) != _page + 1) {
+  @Deprecated('Use "on" instead')
+  Iterable<T> onFetch(PaginatedBase<T> response) => on(response);
+
+  Iterable<T> on(PaginatedBase<T> response) {
+    if (response.pPage != _page + 1) {
       // We have received a page that we already got or that is not the next one, skip.
       debugPrint(
         'Inconsistent pagination of ${typeOf<T>()} detected. '
@@ -267,18 +261,42 @@ class DataState<T> {
       );
       return _items;
     }
-    _items.removeWhere((e) => response.pItems!.contains(e));
-    _items.addAll(response.pItems!);
-    _lastPage = response.pLast!;
-    _page = response.pPage!;
+
+    if (response.pItems.length < response.pLimit) {
+      // We found the last page
+      if (hasMore) {
+        debugPrint(
+          'Inconsistent pagination of ${typeOf<T>()} detected. Page ${page + 1}'
+          ' has less elements than expected (${response.pLimit}). '
+          'The last page should be ${_lastPage == 0 ? '"undefined"' : '$_lastPage'}. '
+          'Path: ${response.pPath}',
+        );
+      }
+      // Avoid any loop with the api, force change the last page.
+      // We add max(1, x), because 0 will make #hasMore always return true
+      _page = max(1, response.pPage);
+      _lastPage = _page;
+      if (response.pItems.isNotEmpty) {
+        _items.removeWhere((e) => response.pItems.contains(e));
+        _items.addAll(response.pItems);
+        _nbHits = response.nbHits;
+        _lastResponse = response;
+      }
+      return _items;
+    }
+
+    _items.removeWhere((e) => response.pItems.contains(e));
+    _items.addAll(response.pItems);
+    _lastPage = response.pLast ?? 1000;
+    _page = response.pPage;
     _nbHits = response.nbHits;
+    _lastResponse = response;
     return _items;
   }
 
   void _incrementCount(int count) {
     setItemsCount((_nbHits ?? 0) + count);
   }
-
 
   void setItemsCount(int? count) {
     _nbHits = count == null ? null : max(0, count);
@@ -317,7 +335,6 @@ extension ChangeNotifierExt<C extends ChangeNotifier> on C {
       CustomStateProvider<T, C>(changeNotifier: this, convertor: state);
 }
 
-
 typedef ExternalStateData<T> = T? Function([String? query]);
 typedef ExternalHasMore<T> = bool Function([String? query]);
 
@@ -329,15 +346,15 @@ class ExternalStateProvider<T> extends StateProvider<T> {
   final ValueChanged<VoidCallback>? onRemoveListener;
 
   ExternalStateProvider.from(
-      this.externalData, {
-        this.externalHasMore,
-        this.onClear,
-        this.onAddListener,
-        this.onRemoveListener,
-      }) {
+    this.externalData, {
+    this.externalHasMore,
+    this.onClear,
+    this.onAddListener,
+    this.onRemoveListener,
+  }) {
     assert(
-    onAddListener == null || onRemoveListener != null,
-    'onRemoveListener must be provided if onAddListener is provided',
+      onAddListener == null || onRemoveListener != null,
+      'onRemoveListener must be provided if onAddListener is provided',
     );
   }
 
@@ -366,4 +383,3 @@ class ExternalStateProvider<T> extends StateProvider<T> {
   @override
   void clear() => onClear?.call();
 }
-

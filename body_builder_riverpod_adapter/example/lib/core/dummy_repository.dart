@@ -2,8 +2,8 @@ import 'package:body_builder/body_builder.dart';
 import 'package:body_builder_riverpod_adapter/body_builder_riverpod_adapter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final myStateProvider = createStateNotifierProvider<String>();
-final myPaginatedProvider = createPaginatedStateNotifierProvider<String>();
+final myStateProvider = createSimpleStateProvider<String>();
+final myPaginatedProvider = createPaginatedStateProvider<String>();
 
 final myBProvider = Provider<BodyProvider<String>>(
   (Ref ref) {
@@ -53,7 +53,7 @@ class DummyRepository {
   Future<Iterable<String>> fetchPaginatedData(String? query) {
     PaginatedState<String> state = myPaginatedNotifier.pState;
     return Future.delayed(const Duration(seconds: 2), () {
-      int lastPage = state.get(query).page;
+      int previousPage = state.get(query).page;
 
       /// Uncomment this to test the error handling mechanism
       // if (lastPage == 2) {
@@ -62,14 +62,14 @@ class DummyRepository {
       //   );
       // }
       return PaginatedResponse<String>(
-        [
+        items: [
           /// Generate dummy paginated data
           for (int i = 0; i < _itemsPerPage; i++)
-            'Value ${lastPage * _itemsPerPage + i}',
+            'Value ${previousPage * _itemsPerPage + i}',
         ],
-        lastPage + 1,
-        5,
+        page: previousPage + 1,
+        lastPage: 5,
       );
-    }).then((response) => state.onFetch(query, response));
+    }).then((response) => state.on(response, query: query));
   }
 }

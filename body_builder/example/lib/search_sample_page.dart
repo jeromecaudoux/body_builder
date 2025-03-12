@@ -68,7 +68,7 @@ class _SearchSamplePageState extends State<SearchSamplePage> {
       /// state's data if the same query is requested again.
       /// - SinglePageState is a here to help when the search response
       /// is not paginated.
-      (value) => _state.onFetch(query, SinglePageState(value)),
+      (value) => _state.on(SinglePageState(value), query: query),
     );
   }
 

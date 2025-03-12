@@ -1,36 +1,28 @@
 import 'package:body_builder/body_builder.dart';
+import 'package:body_builder_riverpod_adapter/src/state_notifiers.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' hide StateProvider;
 
-StateNotifierProvider<SimpleNotifier<T>, T?> createStateNotifierProvider<T>() {
+StateNotifierProvider<SimpleNotifier<T>, T?> createSimpleStateProvider<T>() {
   return StateNotifierProvider<SimpleNotifier<T>, T?>((ref) {
     return SimpleNotifier<T>(null);
   });
 }
 
 StateNotifierProvider<PaginatedNotifier<T>, PaginatedState<T>>
-    createPaginatedStateNotifierProvider<T>() {
+    createPaginatedStateProvider<T>() {
   return StateNotifierProvider<PaginatedNotifier<T>, PaginatedState<T>>((ref) {
     return PaginatedNotifier<T>();
   });
 }
 
-class SimpleNotifier<T> extends StateNotifier<T?> {
-  SimpleNotifier(super.state);
-
-  T? get get => state;
-
-  T? onFetch(T? value) {
-    state = value;
-    return value;
-  }
-}
-
-class PaginatedNotifier<T> extends StateNotifier<PaginatedState<T>> {
-  PaginatedNotifier() : super(PaginatedState<T>());
-
-  PaginatedState<T> get pState => state;
+StateNotifierProvider<RelatedPaginatedNotifier<K, T>,
+    RelatedPaginatedStates<K, T>> createRelatedPaginatedStateProvider<K, T>() {
+  return StateNotifierProvider<RelatedPaginatedNotifier<K, T>,
+      RelatedPaginatedStates<K, T>>((ref) {
+    return RelatedPaginatedNotifier<K, T>();
+  });
 }
 
 extension RefExt on Ref {
@@ -56,16 +48,41 @@ extension RefExt on Ref {
     StateNotifierProvider<PaginatedNotifier<T>, PaginatedState<T>?> listenable,
   ) {
     Map<VoidCallback, ProviderSubscription> listeners = {};
+    PaginatedState<T> pState = read(listenable.notifier).pState;
     return ExternalStateProvider<Iterable<T>>.from(
-      ([String? query]) => read(listenable.notifier).pState.items(query),
-      onClear: () => read(listenable.notifier).pState.clear(),
-      externalHasMore: ([String? query]) =>
-          read(listenable.notifier).pState.hasMore(query),
+      ([String? query]) => pState.items(query),
+      onClear: () => pState.clear(),
+      externalHasMore: ([String? query]) => pState.hasMore(query),
       onAddListener: (VoidCallback listener) {
         listeners[listener]?.close();
         listeners[listener] = listen<PaginatedState<T>?>(
           listenable,
           (PaginatedState<T>? previous, PaginatedState<T>? next) => listener(),
+        );
+      },
+      onRemoveListener: (VoidCallback listener) => listeners[listener]?.close(),
+    );
+  }
+
+  ExternalStateProvider<Iterable<T>> asFamilyPaginated<K, T>(
+    StateNotifierProvider<RelatedPaginatedNotifier<K, T>,
+            RelatedPaginatedStates<K, T>?>
+        listenable,
+    K id,
+  ) {
+    Map<VoidCallback, ProviderSubscription> listeners = {};
+    PaginatedState<T> pState = read(listenable.notifier).rpState.byId(id);
+    return ExternalStateProvider<Iterable<T>>.from(
+      ([String? query]) => pState.items(query),
+      onClear: () => pState.clear(),
+      externalHasMore: ([String? query]) => pState.hasMore(query),
+      onAddListener: (VoidCallback listener) {
+        listeners[listener]?.close();
+        listeners[listener] = listen<RelatedPaginatedStates<K, T>?>(
+          listenable,
+          (RelatedPaginatedStates<K, T>? previous,
+                  RelatedPaginatedStates<K, T>? next) =>
+              listener(),
         );
       },
       onRemoveListener: (VoidCallback listener) => listeners[listener]?.close(),
