@@ -118,7 +118,7 @@ class _CustomBuilderPageState extends State<CustomBuilderPage> {
         throw Exception(
             'When the software starts breakdancing, it\'s a bug break!');
       }
-      return _state.onFetch(value)!;
+      return _state.on(value);
     });
   }
 }

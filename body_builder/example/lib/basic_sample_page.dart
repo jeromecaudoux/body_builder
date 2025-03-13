@@ -27,7 +27,7 @@ class _BasicBodyBuilderPageState extends State<BasicBodyBuilderPage> {
         title: const Text('Basic'),
         actions: [
           IconButton(
-            onPressed: () => _state.onFetch('Value changed in state!'),
+            onPressed: () => _state.on('Value changed in state!'),
             icon: const Icon(Icons.rocket_launch),
           ),
           IconButton(
@@ -43,7 +43,7 @@ class _BasicBodyBuilderPageState extends State<BasicBodyBuilderPage> {
             state: _state,
             cache: _cacheProvider,
             data: _dataProvider,
-          )
+          ),
         ],
         builder: (String data) => Center(child: Text(data)),
       ),
@@ -53,7 +53,7 @@ class _BasicBodyBuilderPageState extends State<BasicBodyBuilderPage> {
   Future<String?> _cacheProvider(String? query) {
     return Future.delayed(
       const Duration(milliseconds: 500),
-          () => 'Value from cache',
+      () => 'Value from cache',
     );
   }
 
@@ -61,6 +61,6 @@ class _BasicBodyBuilderPageState extends State<BasicBodyBuilderPage> {
     return Future.delayed(
       const Duration(seconds: 2),
       () => 'Value from your API',
-    ).then((value) => _state.onFetch(value)!);
+    ).then(_state.on);
   }
 }

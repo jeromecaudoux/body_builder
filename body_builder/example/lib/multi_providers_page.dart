@@ -116,7 +116,7 @@ class _MultiProversPageState extends State<MultiProversPage> {
         throw Exception(
             'Looks like the software is salsa-ing its way into a glitchy performance!');
       }
-      return _state.byId(id).onFetch(value)!;
+      return _state.byId(id).on(value);
     });
   }
 }

@@ -32,7 +32,16 @@ class SimpleStateProvider<T> extends StateProvider<T> {
   @override
   bool hasData([String? query]) => _item != null;
 
+  @Deprecated('Use "on" instead')
   T? onFetch(T? item) {
+    if (item == null) {
+      clear();
+      return null;
+    }
+    return on(item);
+  }
+
+  T on(T item) {
     _item = item;
     notifyListeners();
     return item;
@@ -60,7 +69,7 @@ abstract class RelatedStateProvider<K, T> extends ChangeNotifier {
   }
 
   T onFetch(K key, T item) {
-    byId(key).onFetch(item);
+    byId(key).on(item);
     notifyListeners();
     return item;
   }

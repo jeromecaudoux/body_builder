@@ -19,6 +19,8 @@ BodyBuilder(
 );
 ```
 
+[See full example using providers](https://github.com/jeromecaudoux/body_builder/blob/main/body_builder/example/lib/basic_sample_page.dart)
+[See full example using riverpod](https://github.com/jeromecaudoux/body_builder/blob/main/body_builder_riverpod_adapter/example/lib/basic_sample_page.dart)
 
 # BodyProvider
 
@@ -118,24 +120,66 @@ final _myProvider = BodyProvider(
 - **RelatedPaginatedStates\<K, T\>** is a map of _PaginatedState\<T\>_ sorted by **K**.
 # BodyBuilder
 
+You can trigger a reload of your BodyBuilder by using a GlobalKey like this:
+
+```dart
+final GlobalKey<BodyBuilderState> _key = GlobalKey();
+
+@override  
+Widget build(BuildContext context) {  
+  return Scaffold(  
+    appBar: AppBar(  
+      title: const Text('Basic'),  
+      actions: [  
+        IconButton(  
+	      // Set allowState depending on your needs
+          onPressed: () => _key.currentState?.retry(allowState: false),
+          icon: const Icon(Icons.refresh),  
+        ),  
+      ],  
+    ),  
+    body: BodyBuilder(  
+      key: _key,  
+      providers: [_myProvider],  
+      builder: (_) => Text('My UI'),  
+    ),  
+  );  
+}
+```
+
+If you are working with pagination, add a **LoadMore** widget at the end of your list to trigger the next page and display the corresponding progress or error. [See full example](https://github.com/jeromecaudoux/body_builder/blob/main/example/lib/paginated_page.dart)
+```dart
+Widget _buildListView(Iterable<String> items) {  
+  return ListView.builder(  
+    itemCount: items.length + 1,  
+    itemBuilder: (context, index) {  
+      if (index == items.length) {  
+        return LoadMore(_key);  
+      }  
+      return ListTile(title: Text(items.elementAt(index)));  
+    },  
+  );  
+}
+```
+
 The widget BodyBuilder accept a few parameters:
 
-| Parameter's name  | Type   | Details                       
-|----------------|----------------|---------|-----
-|`providers*` | `Iterable<BodyProvider<T>>?` | List of providers to be used to load your data
-|`builder*` | `Function` | The function to be called with your data or with a BodyState (See details)
-|`customBuilder*`| `CustomBuilder`| A custom builder that you can use to override the progress and or error widgets. It is a function that takes a single parameter **BodyState** .
-|`scrollController`|  `ScrollController?` | You can provide your ScrollController to enable the pull to refresh feature.
-|`onBeforeRefresh` | `VoidCallback?` | A simple callback called before a forcing the reload when a pull to refresh is triggered. By default, the provided states are cleared from their data (cf method #clear in StateProvider).
-|`clearDataOnRefresh` | `bool` | If true, the data are cleared and a progress widget is displayed before reloading. Otherwise, only a small progress is displayed at the top.
-|`searchController` | `TextEditingController?` | You can provide a TextEditingController to support queries. The BodyBuilder will listen to it and force reload when anything changes.
-|`searchFetchDelay` | `Duration` | While listening to your TextEditingController, a delay is applied to avoid too many reload while the user is typing.
-|`animationDuration` | `Duration` | The transition duration between the progress, error and your data widgets.
-|`listenState` | `bool` | Set to true by default. If set to true, then the BodyBuilder will listen to your state(s) and re-call builder/customBuilder when changed.
-|`errorBuilder` | `ErrorBuilder?`| Can be used to customise the error widget
-|`progressBuilder` | `Widget?`|  Can be used to customise the progress widget.
-|`childWrapper` | `ChildWrapper` | Can be used to override the very child of the BodyBuilder.
-|`mergeDataStrategy` | `MergeDataStrategy` | Used when more than one provider is given. If set to **MergeDataStrategy.allAtOne**, the BodyState provided to the customBuilder will be null until all providers' data are retrieved. If **MergeDataStrategy.oneByOne** is set, then the BodyState will contain each provider's data as soon as they are retrieved.
+| Parameter's name  | Type                      | Details                                                                                     |
+|-------------------|---------------------------|---------------------------------------------------------------------------------------------|
+| `providers*`      | `Iterable<BodyProvider<T>>?` | List of providers to be used to load your data.                                            |
+| `builder*`        | `Function`                | The function to be called with your data or with a BodyState (See details).                |
+| `customBuilder*`  | `CustomBuilder`           | A custom builder that you can use to override the progress and or error widgets. It is a function that takes a single parameter **BodyState**. |
+| `scrollController`| `ScrollController?`       | You can provide your ScrollController to enable the pull to refresh feature.               |
+| `onBeforeRefresh` | `VoidCallback?`           | A simple callback called before forcing the reload when a pull to refresh is triggered. By default, the provided states are cleared from their data (cf method #clear in StateProvider). |
+| `clearDataOnRefresh` | `bool`          | If true, the data are cleared and a progress widget is displayed before reloading. Otherwise, only a small progress is displayed at the top. |
+| `searchController` | `TextEditingController?`  | You can provide a TextEditingController to support queries. The BodyBuilder will listen to it and force reload when anything changes. |
+| `searchFetchDelay` | `Duration`                | While listening to your TextEditingController, a delay is applied to avoid too many reloads while the user is typing. |
+| `animationDuration` | `Duration`                | The transition duration between the progress, error, and your data widgets.               |
+| `listenState`     | `bool`                    | Set to true by default. If set to true, then the BodyBuilder will listen to your state(s) and re-call builder/customBuilder when changed. |
+| `errorBuilder`    | `ErrorBuilder?`           | Can be used to customize the error widget.                                                |
+| `progressBuilder` | `Widget?`                 | Can be used to customize the progress widget.                                             |
+| `childWrapper`    | `ChildWrapper`            | Can be used to override the very child of the BodyBuilder.                                |
+| `mergeDataStrategy` | `MergeDataStrategy`      | Used when more than one provider is given. If set to **MergeDataStrategy.allAtOne**, the BodyState provided to the customBuilder will be null until all providers' data are retrieved. If **MergeDataStrategy.oneByOne** is set, then the BodyState will contain each provider's data as soon as they are retrieved. |
 
 ## builder, customBuilder and BodyState
 
