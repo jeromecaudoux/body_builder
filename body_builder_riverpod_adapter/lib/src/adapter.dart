@@ -10,6 +10,14 @@ StateNotifierProvider<SimpleNotifier<T>, T?> createSimpleStateProvider<T>() {
   });
 }
 
+StateNotifierProvider<RelatedSimpleNotifier<K, T>, RelatedStateProvider<K, T>?>
+    createFamilySimpleStateProvider<K, T>() {
+  return StateNotifierProvider<RelatedSimpleNotifier<K, T>,
+      RelatedStateProvider<K, T>?>((ref) {
+    return RelatedSimpleNotifier<K, T>();
+  });
+}
+
 StateNotifierProvider<PaginatedNotifier<T>, PaginatedState<T>>
     createPaginatedStateProvider<T>() {
   return StateNotifierProvider<PaginatedNotifier<T>, PaginatedState<T>>((ref) {
@@ -32,13 +40,10 @@ extension RefExt on Ref {
     Map<VoidCallback, ProviderSubscription> listeners = {};
     return ExternalStateProvider.from(
       ([String? query]) => read(listenable.notifier).get,
-      onClear: () => read(listenable.notifier).onFetch(null),
+      onClear: () => read(listenable.notifier).clear(),
       onAddListener: (VoidCallback listener) {
         listeners[listener]?.close();
-        listeners[listener] = listen<T?>(
-          listenable,
-          (T? previous, T? next) => listener(),
-        );
+        listeners[listener] = listen(listenable, (_, __) => listener());
       },
       onRemoveListener: (VoidCallback listener) => listeners[listener]?.close(),
     );
@@ -50,15 +55,12 @@ extension RefExt on Ref {
     Map<VoidCallback, ProviderSubscription> listeners = {};
     PaginatedState<T> pState = read(listenable.notifier).pState;
     return ExternalStateProvider<Iterable<T>>.from(
-      ([String? query]) => pState.items(query),
-      onClear: () => pState.clear(),
-      externalHasMore: ([String? query]) => pState.hasMore(query),
+      pState.data,
+      onClear: pState.clear,
+      externalHasMore: pState.hasMore,
       onAddListener: (VoidCallback listener) {
         listeners[listener]?.close();
-        listeners[listener] = listen<PaginatedState<T>?>(
-          listenable,
-          (_, __) => listener(),
-        );
+        listeners[listener] = listen(listenable, (_, __) => listener());
       },
       onRemoveListener: (VoidCallback listener) => listeners[listener]?.close(),
     );
@@ -73,15 +75,31 @@ extension RefExt on Ref {
     Map<VoidCallback, ProviderSubscription> listeners = {};
     PaginatedState<T> pState = read(listenable.notifier).rpState.byId(id);
     return ExternalStateProvider<Iterable<T>>.from(
-      ([String? query]) => pState.items(query),
-      onClear: () => pState.clear(),
-      externalHasMore: ([String? query]) => pState.hasMore(query),
+      pState.data,
+      onClear: pState.clear,
+      externalHasMore: pState.hasMore,
       onAddListener: (VoidCallback listener) {
         listeners[listener]?.close();
-        listeners[listener] = listen<RelatedPaginatedStates<K, T>?>(
-          listenable,
-          (_, __) => listener(),
-        );
+        listeners[listener] = listen(listenable, (_, __) => listener());
+      },
+      onRemoveListener: (VoidCallback listener) => listeners[listener]?.close(),
+    );
+  }
+
+  ExternalStateProvider<T> asFamilySimple<K, T>(
+    StateNotifierProvider<RelatedSimpleNotifier<K, T>,
+            RelatedStateProvider<K, T>?>
+        listenable,
+    K id,
+  ) {
+    Map<VoidCallback, ProviderSubscription> listeners = {};
+    SimpleStateProvider<T> state = read(listenable.notifier).rsState.byId(id);
+    return ExternalStateProvider.from(
+      state.data,
+      onClear: state.clear,
+      onAddListener: (VoidCallback listener) {
+        listeners[listener]?.close();
+        listeners[listener] = listen(listenable, (_, __) => listener());
       },
       onRemoveListener: (VoidCallback listener) => listeners[listener]?.close(),
     );

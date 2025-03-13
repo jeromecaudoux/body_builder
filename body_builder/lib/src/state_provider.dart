@@ -12,7 +12,10 @@ typedef StateConvertor<T, C extends ChangeNotifier> = T? Function(
 abstract class StateProvider<T> extends ChangeNotifier {
   bool get isPaginated => false;
 
-  T? items([String? query]);
+  @Deprecated('Use "data" instead')
+  T? items([String? query]) => data(query);
+
+  T? data([String? query]);
 
   bool hasData([String? query]);
 
@@ -27,7 +30,7 @@ class SimpleStateProvider<T> extends StateProvider<T> {
   T? _item;
 
   @override
-  T? items([String? query]) => _item;
+  T? data([String? query]) => _item;
 
   @override
   bool hasData([String? query]) => _item != null;
@@ -54,7 +57,7 @@ class SimpleStateProvider<T> extends StateProvider<T> {
   }
 }
 
-abstract class RelatedStateProvider<K, T> extends ChangeNotifier {
+class RelatedStateProvider<K, T> extends ChangeNotifier {
   final Map<K, SimpleStateProvider<T>> _states = {};
 
   RelatedStateProvider();
@@ -68,7 +71,12 @@ abstract class RelatedStateProvider<K, T> extends ChangeNotifier {
     return _states[id]!;
   }
 
+  @Deprecated('Use "on" instead')
   T onFetch(K key, T item) {
+    return on(key, item);
+  }
+
+  T on(K key, T item) {
     byId(key).on(item);
     notifyListeners();
     return item;
@@ -106,17 +114,19 @@ class PaginatedState<T> extends StateProvider<Iterable<T>> {
 
   final Map<String, DataState<T>> _states = {};
 
+  Iterable<String> get keys => _states.keys;
+
   @override
   bool get isPaginated => true;
 
   @override
-  Iterable<T> items([String? query]) => get(normalizeQuery(query)).items;
+  Iterable<T> data([String? query]) => get(query).items;
 
   @override
-  bool hasData([String? query]) => get(normalizeQuery(query)).items.isNotEmpty;
+  bool hasData([String? query]) => get(query).items.isNotEmpty;
 
   @override
-  bool hasMore([String? query]) => get(normalizeQuery(query)).hasMore;
+  bool hasMore([String? query]) => get(query).hasMore;
 
   int? nbHits(String query) => get(query).nbHits;
 
@@ -147,8 +157,6 @@ class PaginatedState<T> extends StateProvider<Iterable<T>> {
     notifyListeners();
     return item;
   }
-
-  Iterable<String> get keys => _states.keys;
 
   void removeItemWhere(bool Function(T element) test, {String? query}) {
     if (query != null) {
@@ -328,7 +336,7 @@ class CustomStateProvider<T, C extends ChangeNotifier>
       changeNotifier.removeListener(listener);
 
   @override
-  T? items([String? query]) => convertor(changeNotifier);
+  T? data([String? query]) => convertor(changeNotifier);
 
   @override
   bool hasData([String? query]) => convertor(changeNotifier) != null;
@@ -378,14 +386,14 @@ class ExternalStateProvider<T> extends StateProvider<T> {
       onRemoveListener?.call(listener);
 
   @override
-  T? items([String? query]) => externalData(query);
+  T? data([String? query]) => externalData(query);
 
   @override
   bool hasMore([String? query]) => externalHasMore?.call(query) ?? false;
 
   @override
   bool hasData([String? query]) {
-    T? data = items(query);
+    T? data = this.data(query);
     return isPaginated ? (data as Iterable?)?.isNotEmpty == true : data != null;
   }
 

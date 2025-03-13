@@ -43,7 +43,7 @@ class BodyProvider<T> extends BodyProviderBase<T> {
   @override
   BodyState<T> initialState(String? query) {
     if (state?.hasData(query) == true) {
-      return BodyState.data(state!.items(query));
+      return BodyState.data(state!.data(query));
     }
     return BodyState.loading();
   }
@@ -78,7 +78,7 @@ class BodyProvider<T> extends BodyProviderBase<T> {
       return;
     }
     if (state?.hasData(query) == true) {
-      yield BodyState.data(state!.items(query));
+      yield BodyState.data(state!.data(query));
       return;
     }
     // allowData is set to true (by force) to avoid being in a situation with no data

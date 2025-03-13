@@ -23,7 +23,7 @@ class _BasicBodyBuilderPageState extends ConsumerState<BasicBodyBuilderPage> {
           IconButton(
             onPressed: () => ref
                 .read(myStateProvider.notifier)
-                .onFetch('Value changed elsewhere'),
+                .on('Value changed elsewhere'),
             tooltip: 'Change state value',
             icon: const Icon(Icons.rocket_launch),
           ),

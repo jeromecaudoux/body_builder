@@ -41,7 +41,7 @@ class DummyRepository {
   });
 
   Future<String> fetchSingleData() async {
-    return myStateNotifier.onFetch(await _myFakeApiCall())!;
+    return myStateNotifier.on(await _myFakeApiCall());
   }
 
   Future<String> _myFakeApiCall() async {
