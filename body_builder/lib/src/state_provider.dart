@@ -276,7 +276,7 @@ class DataState<T> {
       if (hasMore) {
         debugPrint(
           'Inconsistent pagination of ${typeOf<T>()} detected. Page ${page + 1}'
-          ' has less elements than expected (${response.pLimit}). '
+          ' has less elements than expected (${response.pItems.length}<${response.pLimit}). '
           'The last page should be ${_lastPage == 0 ? '"undefined"' : '$_lastPage'}. '
           'Path: ${response.pPath}',
         );
