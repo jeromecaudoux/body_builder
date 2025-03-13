@@ -92,11 +92,11 @@ final _myProvider = BodyProvider(
 
 Future<Iterable<String>> _getMyFollowers(String? query) {
   return Future.delayed(const Duration(seconds: 2), () {
-	 int previousPage = _myState.get(query).page;
-	 return PaginatedResponse<String>(  
+   int previousPage = _myState.get(query).page;
+   return PaginatedResponse<String>(  
       items: [
-			  for (int i = 0; i < _itemsPerPage; i++)  
-	          'Follower n°${previousPage * _itemsPerPage + i}',  
+        for (int i = 0; i < _itemsPerPage; i++)
+          'Follower n°${previousPage * _itemsPerPage + i}',  
       ],  
       page: previousPage + 1,  
       lastPage: 5,  
@@ -132,7 +132,7 @@ Widget build(BuildContext context) {
       title: const Text('Basic'),  
       actions: [  
         IconButton(  
-	      // Set allowState depending on your needs
+          // Set allowState depending on your needs
           onPressed: () => _key.currentState?.retry(allowState: false),
           icon: const Icon(Icons.refresh),  
         ),  
@@ -199,12 +199,13 @@ final _myProvider2 = BodyProvider(
 );
 
 BodyBuilder(
-	 providers: [_myProvider1, _myProvider2, ...],
-	 builder: (BodyState bState) {
-		BodyState<String>? bState1 = bState.byType<String>();
-		BodyState<int>? bState2 = bState.byName<int>('my-provider2')
-		return Text('data1=${bState1?.data} and data2=${bState2?.data}');
-	}
+   providers: [_myProvider1, _myProvider2, ...],
+   customBuilder: (BodyState bState) {
+    BodyState<String>? bState1 = bState.byType<String>();
+    BodyState<int>? bState2 = bState.byName<int>('my-provider2')
+
+    return Text('data1=${bState1?.data} and data2=${bState2?.data}');
+  }
 );
 ```
 
