@@ -1,95 +1,184 @@
-BodyBuilder is a widget that manage the loading of your data. For each situation the widget will rebuild with a BodyState containing all the necessary information to display the right widget.
+**body_builder** is a light and very useful dart only package for flutter that handle the loading of your data from either your states, persistent cache or remote API/else.
 
 <img src="https://raw.githubusercontent.com/jeromecaudoux/body_builder/main/files/sample.gif" width="300" />
 
-## Before you begin
-
-BodyBuilder manage the loading of your data by 3 different ways: state, cache and data:
-
-**state** contains data already retrieved. The BodyBuilder will listen to it and rebuild when the state changes.
-
-**cache** is a Future that will be called if the state is empty and returns a nullable value. It will be called before displaying the loading widget.
-
-**data** is a Future that will be called if the state is empty. If an error occurs, the error widget will be displayed.
-
-The paginated data is also supported (See sample app).
-
-## Simple usage
-
-Here is a simple example of how to use the BodyBuilder widget.
-
-If you want to let the BodyBuilder display a loading and error widget:
-```dart
-BodyBuilder(
-    providers: [
-        BodyProvider(
-            state: _state,
-            cache: _cacheProvider,
-            data: _dataProvider,
-        )
-    ],
-    builder: (String data) => Center(child: Text(data)),
-);
-```
-
-If you want to manage the loading and error widget yourself, you can use the customBuilder which provides a BodyState to display the right widget:
-```dart
-BodyBuilder(
-    key: _key,
-    providers: [
-        BodyProvider(
-            state: _state,
-            cache: _cacheProvider,
-            data: _dataProvider,
-        )
-    ],
-    customBuilder: (BodyState state) => Center(child: Text('data: ${state.data} (isCache: ${state.isCache}), error: ${state.error}, loading: ${state.loading}')),
-);
-```
-
-You can override the default loading and error widget by using the loadingBuilder and errorBuilder.
-
-You can also configure all BodyBuilder by using **BodyBuilder.setDefaultConfig**.
-
 ## How it works
+Define a **BodyProvider** linked to your state and cache/remote functions. _(More details on this below)_
+```dart  
+final _myProvider = BodyProvider(  
+  state: ...,  
+  cache: (String? query) => ...,
+  data: (String? query) =>  ...,  
+)
+```
+Use it with a **BodyBuilder** in your UI:
+```dart  
+BodyBuilder(
+    providers: [_myProvider],
+    builder: (String data) => Text(data),
+);
+```
+
+
+# BodyProvider
+
+A **BodyProvider** is used by the widget BodyBuilder to know what and how to load your data.
+The constructor takes 4 parameters, but only **data** is required:
+
+```dart 
+const BodyProvider({  
+  this.state,  
+  this.cache,  
+  required this.data,  
+  super.name,  
+});
+```
+
+- **state** contains data already retrieved. The BodyBuilder will listen to it and rebuild when the state changes.
+>  **ChangeNotifier**  and **riverpod**'s states are supported. Find more details about the states below.
+
+- **cache** is a Future called if **state** has no data. It is called before displaying the progress widget. A null value may be returned if no cache is available.
+```dart
+Future<String?> _cacheProvider(String? query) {  
+  return Future.delayed(  
+    const Duration(milliseconds: 500),  
+    () => 'Value from cache',  
+  );  
+}
+```
+
+- **data** is a Future is called if **state** has no data. It is called after **cache** and along with a progress indicator. It is your responsibility to update your state in this function (cf: *_state.on*).
+
+```dart
+Future<String> _dataProvider(String? query) {  
+  return Future.delayed(  
+    const Duration(seconds: 2),  
+    () => 'Value from your API',  
+  ).then(_state.on);
+}
+```
+# States
+The BodyProvider's state parameter requires a  **StateProvider**.
+A set of useful states are provided with this package:
+
+- **SimpleStateProvider\<T\>** can be used when you need to store a single object.
+
+```dart
+class BasicSampleState extends SimpleStateProvider<String> {}
+
+final _myState = BasicSampleState();
+
+final _myProvider = BodyProvider(  
+  state: _myState,  
+  ...
+)
+```
+
+- **PaginatedState\<T\>** must be used to store paginated data.
+    - _PaginatedState_ will store a List\<T\> for each search query _(See BodyBuilder section below)_
+    - In your _data_ function, you have to provide a [**PaginatedBase\<T\>**](https://github.com/jeromecaudoux/body_builder/blob/main/lib/src/paginated_response.dart) to **_myState.on** to update the existing list. __myState.on_ will then return the entire list to the BodyBuilder. ([See full example](https://github.com/jeromecaudoux/body_builder/blob/main/example/lib/paginated_page.dart))
+
+ ```dart
+class MyFollowersState extends PaginatedState<String> {}
+
+final _myState = MyFollowersState();
+
+final _myProvider = BodyProvider(  
+  state: _myState,  
+  data: _getMyFollowers
+)
+
+Future<Iterable<String>> _getMyFollowers(String? query) {
+  return Future.delayed(const Duration(seconds: 2), () {
+	 int previousPage = _myState.get(query).page;
+	 return PaginatedResponse<String>(  
+      items: [
+			  for (int i = 0; i < _itemsPerPage; i++)  
+	          'Follower n°${previousPage * _itemsPerPage + i}',  
+      ],  
+      page: previousPage + 1,  
+      lastPage: 5,  
+    );  
+  }).then((response) => _myState.on(response, query: query));
+```
+
+- **RelatedStateProvider\<K, T\>** is a map of _SimpleStateProvider\<T\>_ sorted by **K**.
+
+ ```dart
+class UserByIdRelatedStates extends RelatedStateProvider<String, User> {}
+
+final myRelatedState = UserByIdRelatedStates();
+
+final _myProvider = BodyProvider(  
+  state: myRelatedState.byId('123'),  
+  ...
+)
+```
+
+- **RelatedPaginatedStates\<K, T\>** is a map of _PaginatedState\<T\>_ sorted by **K**.
+# BodyBuilder
+
+The widget BodyBuilder accept a few parameters:
+
+| Parameter's name  | Type   | Details                       
+|----------------|----------------|---------|-----
+|`providers*` | `Iterable<BodyProvider<T>>?` | List of providers to be used to load your data
+|`builder*` | `Function` | The function to be called with your data or with a BodyState (See details)
+|`customBuilder*`| `CustomBuilder`| A custom builder that you can use to override the progress and or error widgets. It is a function that takes a single parameter **BodyState** .
+|`scrollController`|  `ScrollController?` | You can provide your ScrollController to enable the pull to refresh feature.
+|`onBeforeRefresh` | `VoidCallback?` | A simple callback called before a forcing the reload when a pull to refresh is triggered. By default, the provided states are cleared from their data (cf method #clear in StateProvider).
+|`clearDataOnRefresh` | `bool` | If true, the data are cleared and a progress widget is displayed before reloading. Otherwise, only a small progress is displayed at the top.
+|`searchController` | `TextEditingController?` | You can provide a TextEditingController to support queries. The BodyBuilder will listen to it and force reload when anything changes.
+|`searchFetchDelay` | `Duration` | While listening to your TextEditingController, a delay is applied to avoid too many reload while the user is typing.
+|`animationDuration` | `Duration` | The transition duration between the progress, error and your data widgets.
+|`listenState` | `bool` | Set to true by default. If set to true, then the BodyBuilder will listen to your state(s) and re-call builder/customBuilder when changed.
+|`errorBuilder` | `ErrorBuilder?`| Can be used to customise the error widget
+|`progressBuilder` | `Widget?`|  Can be used to customise the progress widget.
+|`childWrapper` | `ChildWrapper` | Can be used to override the very child of the BodyBuilder.
+|`mergeDataStrategy` | `MergeDataStrategy` | Used when more than one provider is given. If set to **MergeDataStrategy.allAtOne**, the BodyState provided to the customBuilder will be null until all providers' data are retrieved. If **MergeDataStrategy.oneByOne** is set, then the BodyState will contain each provider's data as soon as they are retrieved.
+
+## builder, customBuilder and BodyState
+
+If you have a fixed number of BodyProvider, you can get them in your **builder**'s method like this (up to 9 parameters):
+```dart  
+BodyBuilder(
+    providers: [_myProvider1, _myProvider2, _myProvider3, ...],
+    builder: (String data1, int data2, User user3, ...) => Text('Your UI here'),
+);
+```
+
+If you are using **customBuilder**, you can have as many providers as you want and get the data using the **byType** or **byName**:
+```dart 
+final _myProvider2 = BodyProvider(  
+  name: 'my-provider2',  
+  ...
+);
+
+BodyBuilder(
+	 providers: [_myProvider1, _myProvider2, ...],
+	 builder: (BodyState bState) {
+		BodyState<String>? bState1 = bState.byType<String>();
+		BodyState<int>? bState2 = bState.byName<int>('my-provider2')
+		return Text('data1=${bState1?.data} and data2=${bState2?.data}');
+	}
+);
+```
+
+**BodyState\<T\>** is a class containing informations about the situation of the associated BodyProvider:
+```dart 
+final class BodyState<T> {  
+  final bool isCache;  
+  final T? data;  
+  final bool isLoading;  
+  final Object? error;  
+  final StackTrace? errorStack;  
+  ...
+ }
+```
+
+# More details
 
 <img src="https://raw.githubusercontent.com/jeromecaudoux/body_builder/main/files/diagram.jpg" width="600" />
-
-## StateProvider
-
-A few StateProvider are available to help you in different situations.
-
-**SimpleStateProvider** can be used to handle a single value. (Example: You want to retrieve a config from your server)
-```dart 
-    BodyProvider(
-        state: context.read<BasicSampleState>(),
-        ...
-    )
-```
-
-**RelatedStateProvider** is a map of SimpleStateProvider sorted with a key of your choice. (Example: You want to retrieve many users and sort them by their id)
-```dart 
-    BodyProvider(
-        state: context.read<MultiProviderSampleState>().byId(...),
-        ...
-    )
-```
-
-**PaginatedState** allows you to retrieve a paginated list of data. (See sample app for example)
-
-**RelatedPaginatedStates** is a map of PaginatedState sorted with a key of your choice. (Example: You want to sort the paginated followers of your users by their id)
-```dart 
-    BodyProvider(
-        state: context.read<YourRelatedPaginatedStates>().byId(...),
-        ...
-    )
-```
-
-**ChangeNotifierExt.map** allows you to convert any ChangeNotifier to a StateProvider via map function.
-
-```dart 
-final StateProvider<...> state = context.read<YouState>().map((YouState state) => state.someValue);
-```
 
 ## Additional information
 
