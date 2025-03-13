@@ -57,7 +57,7 @@ extension RefExt on Ref {
         listeners[listener]?.close();
         listeners[listener] = listen<PaginatedState<T>?>(
           listenable,
-          (PaginatedState<T>? previous, PaginatedState<T>? next) => listener(),
+          (_, __) => listener(),
         );
       },
       onRemoveListener: (VoidCallback listener) => listeners[listener]?.close(),
@@ -80,9 +80,7 @@ extension RefExt on Ref {
         listeners[listener]?.close();
         listeners[listener] = listen<RelatedPaginatedStates<K, T>?>(
           listenable,
-          (RelatedPaginatedStates<K, T>? previous,
-                  RelatedPaginatedStates<K, T>? next) =>
-              listener(),
+          (_, __) => listener(),
         );
       },
       onRemoveListener: (VoidCallback listener) => listeners[listener]?.close(),

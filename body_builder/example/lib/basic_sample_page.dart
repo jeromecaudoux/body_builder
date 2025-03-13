@@ -50,10 +50,10 @@ class _BasicBodyBuilderPageState extends State<BasicBodyBuilderPage> {
     );
   }
 
-  Future<String> _cacheProvider(String? query) {
+  Future<String?> _cacheProvider(String? query) {
     return Future.delayed(
       const Duration(milliseconds: 500),
-      () => 'Value from cache',
+          () => 'Value from cache',
     );
   }
 

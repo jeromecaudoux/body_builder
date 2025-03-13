@@ -38,7 +38,7 @@ class _MultiProversPageState extends State<MultiProversPage> {
               state: _state.byId(i),
               cache: (_) => _cacheProvider(i),
               data: (_) => _dataProvider(i),
-            )
+            ),
         ],
         customBuilder: _buildBody,
       ),

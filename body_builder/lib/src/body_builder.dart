@@ -52,7 +52,7 @@ class BodyBuilder<T> extends StatefulWidget {
   final ScrollController? scrollController;
   final VoidCallback? onBeforeRefresh;
   final Duration searchFetchDelay;
-  final BodyProviderMergeDataStrategy mergeDataStrategy;
+  final MergeDataStrategy mergeDataStrategy;
 
   const BodyBuilder({
     this.showAppBarOnLoadingAndPlaceholder = false,
@@ -73,7 +73,7 @@ class BodyBuilder<T> extends StatefulWidget {
     this.childWrapper,
     this.builder,
     this.onBeforeRefresh,
-    this.mergeDataStrategy = BodyProviderMergeDataStrategy.allAtOne,
+    this.mergeDataStrategy = MergeDataStrategy.allAtOne,
     this.searchFetchDelay = const Duration(milliseconds: 400),
     super.key,
   })  : assert(
@@ -176,7 +176,7 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
     );
 
     ChildWrapper? childWrapper =
-        BodyBuilderConfig._instance?.childWrapper ?? widget.childWrapper;
+        widget.childWrapper ?? BodyBuilderConfig._instance?.childWrapper;
     return childWrapper?.call(child, _state, retry) ?? child;
   }
 

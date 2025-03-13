@@ -6,7 +6,7 @@ BodyBuilder is a widget that manage the loading of your data. For each situation
 
 BodyBuilder manage the loading of your data by 3 different ways: state, cache and data:
 
-**state** is a ChangeNotifier that contains data already retrieved. The BodyBuilder will listen to it and rebuild when the state changes.
+**state** contains data already retrieved. The BodyBuilder will listen to it and rebuild when the state changes.
 
 **cache** is a Future that will be called if the state is empty and returns a nullable value. It will be called before displaying the loading widget.
 

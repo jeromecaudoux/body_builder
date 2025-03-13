@@ -138,8 +138,8 @@ class BodyProvider<T> extends BodyProviderBase<T> {
 extension ProviderExt on Iterable<BodyProviderBase> {
   BodyState initialState(
     String? query, {
-    BodyProviderMergeDataStrategy mergeStrategy =
-        BodyProviderMergeDataStrategy.allAtOne,
+    MergeDataStrategy mergeStrategy =
+        MergeDataStrategy.allAtOne,
   }) {
     return _merge(
       map((state) => state.initialState(query).copy(providerName: state.name)),
@@ -152,8 +152,8 @@ extension ProviderExt on Iterable<BodyProviderBase> {
     bool allowState = true,
     bool allowCache = true,
     bool allowData = true,
-    BodyProviderMergeDataStrategy mergeStrategy =
-        BodyProviderMergeDataStrategy.allAtOne,
+    MergeDataStrategy mergeStrategy =
+        MergeDataStrategy.allAtOne,
   }) {
     return Rx.combineLatest(
       map(
@@ -172,7 +172,7 @@ extension ProviderExt on Iterable<BodyProviderBase> {
 
   BodyState _merge(
     Iterable<BodyState> states,
-    BodyProviderMergeDataStrategy strategy,
+    MergeDataStrategy strategy,
   ) {
     if (kDebugMode && BodyBuilderConfig.instance.debugLogsEnabled) {
       _debugPrintStates(states);
@@ -194,9 +194,9 @@ extension ProviderExt on Iterable<BodyProviderBase> {
           .copy(data: states);
     }
     switch (strategy) {
-      case BodyProviderMergeDataStrategy.allAtOne:
+      case MergeDataStrategy.allAtOne:
         return BodyState.loading();
-      case BodyProviderMergeDataStrategy.oneByOne:
+      case MergeDataStrategy.oneByOne:
         return BodyState.loading().copy(data: states);
     }
   }
@@ -217,7 +217,7 @@ extension ProviderExt on Iterable<BodyProviderBase> {
 /// - [oneByOne] - A "loading state" is emitted along with the data of each
 /// provider until all providers have data. Then emit a "data state" with all
 /// providers data.
-enum BodyProviderMergeDataStrategy {
+enum MergeDataStrategy {
   allAtOne,
   oneByOne,
 }
