@@ -104,6 +104,9 @@ class RelatedPaginatedStates<K, T> extends ChangeNotifier {
   PaginatedState<T> byId(K id) => _states[id] ??= PaginatedState<T>();
 
   void clear() {
+    for (final PaginatedState<T> state in _states.values) {
+      state.clear();
+    }
     _states.clear();
     notifyListeners();
   }

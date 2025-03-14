@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' hide StateProvider;
 class SimpleNotifier<T> extends StateNotifier<T?> {
   SimpleNotifier(super.state);
 
-  T? get get => state;
+  T? get data => state;
 
   T on(T value) {
     state = value;

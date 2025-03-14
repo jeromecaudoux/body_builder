@@ -3,15 +3,15 @@ import 'package:body_builder_example/core/dummy_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class BasicBodyBuilderPage extends ConsumerStatefulWidget {
-  const BasicBodyBuilderPage({super.key});
+class SimplePage extends ConsumerStatefulWidget {
+  const SimplePage({super.key});
 
   @override
-  ConsumerState<BasicBodyBuilderPage> createState() =>
+  ConsumerState<SimplePage> createState() =>
       _BasicBodyBuilderPageState();
 }
 
-class _BasicBodyBuilderPageState extends ConsumerState<BasicBodyBuilderPage> {
+class _BasicBodyBuilderPageState extends ConsumerState<SimplePage> {
   final GlobalKey<BodyBuilderState> _key = GlobalKey();
 
   @override
@@ -22,7 +22,7 @@ class _BasicBodyBuilderPageState extends ConsumerState<BasicBodyBuilderPage> {
         actions: [
           IconButton(
             onPressed: () => ref
-                .read(myStateProvider.notifier)
+                .read(mySimpleProvider.notifier)
                 .on('Value changed elsewhere'),
             tooltip: 'Change state value',
             icon: const Icon(Icons.rocket_launch),

@@ -1,9 +1,13 @@
-import 'package:body_builder_example/basic_sample_page.dart';
+import 'package:body_builder/body_builder.dart';
 import 'package:body_builder_example/paginated_page.dart';
+import 'package:body_builder_example/related_paginated_page.dart';
+import 'package:body_builder_example/related_simple_page.dart';
+import 'package:body_builder_example/simple_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
+  BodyBuilder.setDefaultConfig(debugLogsEnabled: true);
   runApp(const MyApp());
 }
 
@@ -52,7 +56,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const BasicBodyBuilderPage(),
+                    builder: (context) => const SimplePage(),
                   ),
                 );
               },
@@ -63,11 +67,34 @@ class _MyHomePageState extends State<MyHomePage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
+                    builder: (context) => const RelatedSimplePage(),
+                  ),
+                );
+              },
+              child: const Text('Related simple example'),
+            ),
+            const Divider(),
+            FilledButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
                     builder: (context) => const PaginatedPage(),
                   ),
                 );
               },
               child: const Text('Pagination example'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const RelatedPaginatedPage(),
+                  ),
+                );
+              },
+              child: const Text('Related Pagination example'),
             ),
           ],
         ),
