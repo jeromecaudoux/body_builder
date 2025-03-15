@@ -1,6 +1,6 @@
 **body_builder** is a light and very useful dart only package for flutter that handle the loading of your data from either your states, persistent cache or remote API/else.
 
-<img src="https://raw.githubusercontent.com/jeromecaudoux/body_builder/main/files/sample.gif" width="300" />
+<img src="https://raw.githubusercontent.com/jeromecaudoux/body_builder/main/body_builder/files/sample.gif" width="300" />
 
 ## How it works
 Define a **BodyProvider** linked to your state and cache/remote functions. _(More details on this below)_
@@ -224,7 +224,7 @@ final class BodyState<T> {
 
 # More details
 
-<img src="https://raw.githubusercontent.com/jeromecaudoux/body_builder/main/files/diagram.jpg" width="600" />
+<img src="https://raw.githubusercontent.com/jeromecaudoux/body_builder/main/body_builder/files/diagram.jpg" width="600" />
 
 ## Additional information
 
