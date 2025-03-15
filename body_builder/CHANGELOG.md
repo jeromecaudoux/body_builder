@@ -1,6 +1,13 @@
+## 1.0.13
+
+* `StateProvider.items` is now deprecated. Use `StateProvider.data` instead
+* `SimpleStateProvider.onFetch` is now deprecated. Use `SimpleStateProvider.on` instead
+* `RelatedStateProvider.onFetch` is now deprecated. Use `RelatedStateProvider.on` instead
+* `PaginatedState.onFetch` is now deprecated. Use `PaginatedState.on` instead
+
 ## 1.0.12
 
-* Add a new parameter `BodyProviderMergeDataStrategy` to allow different strategies when merging all providers data
+* Add a new parameter `MergeDataStrategy` to allow different strategies when merging all providers data
 
 ## 1.0.11
 

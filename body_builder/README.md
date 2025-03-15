@@ -21,7 +21,7 @@ BodyBuilder(
 
 [See full example using providers](https://github.com/jeromecaudoux/body_builder/blob/main/body_builder/example/lib/basic_sample_page.dart)
 
-[See full example using riverpod](https://github.com/jeromecaudoux/body_builder/blob/main/body_builder_riverpod_adapter/example/lib/basic_sample_page.dart)
+[See full example using riverpod](https://github.com/jeromecaudoux/body_builder/blob/main/body_builder_riverpod_adapter/example/lib/simple_page.dart)
 
 # BodyProvider
 
