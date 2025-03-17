@@ -46,7 +46,7 @@ final class BodyState<T> {
     if (combinedStates) {
       return (data as Iterable?)?.every((state) => state.hasData) ?? false;
     }
-    return data != null;
+    return data != null || (!hasError && !isLoading);
   }
 
   bool get hasError => error != null;

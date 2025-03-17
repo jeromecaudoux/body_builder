@@ -1,3 +1,7 @@
+## 1.0.14
+
+* Fix `BodyState.hasData` which was not working properly when data was null.
+
 ## 1.0.13
 
 * `StateProvider.items` is now deprecated. Use `StateProvider.data` instead
