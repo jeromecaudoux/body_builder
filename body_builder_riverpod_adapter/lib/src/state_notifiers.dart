@@ -26,7 +26,11 @@ class RelatedSimpleNotifier<K, T>
 
   T on(K id, T item) => byId(id).on(item);
 
-  void clear() => rsState.clear();
+  void clear() {
+    for (final key in rsState.keys) {
+      byId(key).clear();
+    }
+  }
 
   T? where(bool Function(T?) test) => rsState.where(test);
 }

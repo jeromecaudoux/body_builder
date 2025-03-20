@@ -1,3 +1,7 @@
+## 1.0.1
+
+* Fix state events not emitted with `asFamilySimple`
+
 ## 1.0.0
 
 * Initial version of the body_builder_riverpod_adapter package.

@@ -1,6 +1,6 @@
 name: body_builder_riverpod_adapter
 description: "BodyBuilder is a widget that manage the loading of your data"
-version: 1.0.0
+version: 1.0.1
 homepage: https://github.com/jeromecaudoux/body_builder/
 
 environment:
@@ -10,7 +10,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  body_builder: ^1.0.13
+  body_builder:
+    path: ../body_builder
   flutter_riverpod: ^2.6.1
 
 dev_dependencies:

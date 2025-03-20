@@ -65,9 +65,13 @@ extension RefExt on Ref {
         listenable,
     K id,
   ) {
-    return _createStateProvider(
-      () => read(listenable.notifier).byId(id),
-      listenable,
+    StateProvider<T> pState() => read(listenable.notifier).byId(id);
+    return ExternalStateProvider<T>.from(
+      ([String? query]) => pState().data(query),
+      onClear: () => pState().clear(),
+      onAddListener: (VoidCallback listener) => pState().addListener(listener),
+      onRemoveListener: (VoidCallback listener) =>
+          pState().removeListener(listener),
     );
   }
 
