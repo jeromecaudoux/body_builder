@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'dart:developer';
 
-import 'package:body_builder/src/body_builder.dart';
-import 'package:body_builder/src/body_state.dart';
-import 'package:body_builder/src/state_provider.dart';
+import 'package:body_builder/body_builder.dart';
+import 'package:cache_annotations/annotations.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:rxdart/rxdart.dart';
@@ -135,11 +134,65 @@ class BodyProvider<T> extends BodyProviderBase<T> {
   }
 }
 
+class CachedBodyProvider<T> extends BodyProvider<T> {
+  final CacheEntry<T> cacheEntry;
+
+  CachedBodyProvider({
+    super.state,
+    required super.data,
+    required this.cacheEntry,
+    super.name,
+  });
+
+  @override
+  Stream<BodyState<T>> _loadAfterState(
+    String? query,
+    bool allowCache,
+    bool allowData,
+  ) {
+    return _loadCache(query, allowData: allowData);
+  }
+
+  @override
+  Stream<BodyState<T>> _loadCache(
+    String? query, {
+    bool allowData = true,
+  }) async* {
+    yield BodyState.loading();
+    try {
+      final T? data = await cacheEntry.get();
+      if (data != null) {
+        yield BodyState.cache(data, isLoading: allowData);
+      }
+      if (allowData) {
+        yield* _loadData(query);
+      }
+    } catch (e, s) {
+      debugPrint('Failed to load cache: $e\n$s');
+      yield BodyState.error(e, s);
+    }
+  }
+
+  @override
+  Stream<BodyState<T>> _loadData(String? query) {
+    return super._loadData(query).map((BodyState<T> state) {
+      if (state.hasData) {
+        T? data = state.data;
+        if (data == null) {
+          cacheEntry.delete();
+        } else {
+          cacheEntry.set(data);
+        }
+      }
+      return state;
+    });
+  }
+}
+
 extension ProviderExt on Iterable<BodyProviderBase> {
   BodyState initialState(
     String? query, {
-    MergeDataStrategy mergeStrategy =
-        MergeDataStrategy.allAtOne,
+    MergeDataStrategy mergeStrategy = MergeDataStrategy.allAtOne,
   }) {
     return _merge(
       map((state) => state.initialState(query).copy(providerName: state.name)),
@@ -152,8 +205,7 @@ extension ProviderExt on Iterable<BodyProviderBase> {
     bool allowState = true,
     bool allowCache = true,
     bool allowData = true,
-    MergeDataStrategy mergeStrategy =
-        MergeDataStrategy.allAtOne,
+    MergeDataStrategy mergeStrategy = MergeDataStrategy.allAtOne,
   }) {
     return Rx.combineLatest(
       map(
@@ -203,7 +255,7 @@ extension ProviderExt on Iterable<BodyProviderBase> {
 
   void _debugPrintStates(Iterable<BodyState<dynamic>> states) {
     log('--- BodyBuilder -> OnEvent Start ---');
-    log('Providers: ${map((e) => e.name ?? 'UnknownProvider')}');
+    log('Providers: ${map((e) => e.name ?? '${e.runtimeType}')}');
     for (var state in states) {
       log('State: $state');
     }

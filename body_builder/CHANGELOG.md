@@ -1,3 +1,7 @@
+## 1.0.15
+
+* Add `CachedBodyProvider` which can be used along with [cache_annotations](https://pub.dev/packages/cache_annotations)
+
 ## 1.0.14
 
 * Fix `BodyState.hasData` which was not working properly when data was null.
