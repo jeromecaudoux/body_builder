@@ -1,3 +1,7 @@
+## 1.0.16
+
+* `LoadMore` may now trigger loadMoreIfNeeded in `didChangeDependencies`
+
 ## 1.0.15
 
 * Add `CachedBodyProvider` which can be used along with [cache_annotations](https://pub.dev/packages/cache_annotations)

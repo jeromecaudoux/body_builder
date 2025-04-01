@@ -38,6 +38,14 @@ class _LoadMoreState extends State<LoadMore> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!widget.useButton) {
+      widget.bodyBuilderKey?.currentState?.loadMoreIfNeeded();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     BodyBuilderState? state = widget.bodyBuilderKey?.currentState;
     if (state == null) {
