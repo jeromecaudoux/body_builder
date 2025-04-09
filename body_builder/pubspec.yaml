@@ -1,6 +1,6 @@
 name: body_builder
 description: "BodyBuilder is a widget that manage the loading of your data"
-version: 1.0.16
+version: 1.0.17
 homepage: https://github.com/jeromecaudoux/body_builder/
 
 environment:

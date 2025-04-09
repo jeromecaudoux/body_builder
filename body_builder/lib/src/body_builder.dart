@@ -141,6 +141,8 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
 
   BodyState _state = BodyState.loading();
 
+  BodyState get state => _state;
+
   bool get isLoading => _state.isLoading;
 
   bool get isCache => _state.isCache;

@@ -1,3 +1,7 @@
+## 1.0.17
+
+* Expose `state` in `BodyBuilderState`
+
 ## 1.0.16
 
 * `LoadMore` may now trigger loadMoreIfNeeded in `didChangeDependencies`
