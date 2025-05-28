@@ -1,3 +1,7 @@
+## 1.0.18
+
+* Add missing setState in `BodyBuilder`.
+
 ## 1.0.17
 
 * Expose `state` in `BodyBuilderState`
