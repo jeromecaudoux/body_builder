@@ -10,9 +10,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-#  body_builder: ^1.0.18
-  body_builder:
-    path: ../body_builder/
+  body_builder: ^1.1.0
+#  body_builder:
+#    path: ../body_builder/
   flutter_riverpod: ^3.0.3
 
 dev_dependencies:
