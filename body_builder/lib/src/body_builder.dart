@@ -337,7 +337,9 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
           )
           .listen(_onState, onError: _onError);
       await _subscription?.asFuture();
-      _refreshController.refreshCompleted();
+      setState(() {
+        _refreshController.refreshCompleted();
+      });
     } catch (e, s) {
       _refreshController.refreshFailed();
       _onError(e, s);
