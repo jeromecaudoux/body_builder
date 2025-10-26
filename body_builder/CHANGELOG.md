@@ -1,3 +1,7 @@
+## 1.1.0
+
+* Bump dependencies versions
+
 ## 1.0.18
 
 * Add missing setState in `BodyBuilder`.
