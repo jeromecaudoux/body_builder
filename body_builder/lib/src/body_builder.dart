@@ -362,7 +362,7 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
     return false;
   }
 
-  void _onError(e, s) {
+  void _onError(Object e, StackTrace s) {
     // Big error, probably inside the body builder logic
     // Just print it and send an error to the UI
     debugPrint('Failed to resolve provider(s): $e\n$s');

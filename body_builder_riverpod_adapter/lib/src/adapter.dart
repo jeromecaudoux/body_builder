@@ -2,7 +2,8 @@ import 'package:body_builder/body_builder.dart';
 import 'package:body_builder_riverpod_adapter/src/state_notifiers.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' hide StateProvider;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' hide StateProvider;
 
 StateNotifierProvider<SimpleNotifier<T>, T?> createSimpleStateProvider<T>() {
   return StateNotifierProvider<SimpleNotifier<T>, T?>((ref) {

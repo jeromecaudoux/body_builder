@@ -1,4 +1,4 @@
-library body_builder_riverpod_adapter;
+library;
 
 export 'src/adapter.dart';
 export 'src/state_notifiers.dart';

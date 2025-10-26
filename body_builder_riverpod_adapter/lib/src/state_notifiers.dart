@@ -1,5 +1,5 @@
 import 'package:body_builder/body_builder.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' hide StateProvider;
+import 'package:flutter_riverpod/legacy.dart';
 
 class SimpleNotifier<T> extends StateNotifier<T?> {
   SimpleNotifier(super.state);
