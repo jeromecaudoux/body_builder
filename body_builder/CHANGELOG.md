@@ -1,3 +1,7 @@
+## 1.1.1
+
+* Add new parameter `refresherHeader` to allow pull to refresh customization
+
 ## 1.1.0
 
 * Bump dependencies versions
