@@ -1,3 +1,7 @@
+## 1.1.2
+
+* riverpod > Add support for auto dispose state
+
 ## 1.1.1
 
 * Add new parameter `refresherHeader` to allow pull to refresh customization
