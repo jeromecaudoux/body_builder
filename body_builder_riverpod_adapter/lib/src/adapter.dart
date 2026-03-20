@@ -34,6 +34,39 @@ StateNotifierProvider<RelatedPaginatedNotifier<K, T>,
   });
 }
 
+/* AutoDispose versions */
+StateNotifierProvider<SimpleNotifier<T>, T?>
+    createAutoDisposeSimpleStateProvider<T>() {
+  return StateNotifierProvider.autoDispose<SimpleNotifier<T>, T?>((ref) {
+    return SimpleNotifier<T>(null);
+  });
+}
+
+StateNotifierProvider<RelatedSimpleNotifier<K, T>, RelatedStateProvider<K, T>?>
+    createAutoDisposeFamilySimpleStateProvider<K, T>() {
+  return StateNotifierProvider.autoDispose<RelatedSimpleNotifier<K, T>,
+      RelatedStateProvider<K, T>?>((ref) {
+    return RelatedSimpleNotifier<K, T>();
+  });
+}
+
+StateNotifierProvider<PaginatedNotifier<T>, PaginatedState<T>>
+    createAutoDisposePaginatedStateProvider<T>() {
+  return StateNotifierProvider.autoDispose<PaginatedNotifier<T>,
+      PaginatedState<T>>((ref) {
+    return PaginatedNotifier<T>();
+  });
+}
+
+StateNotifierProvider<RelatedPaginatedNotifier<K, T>,
+        RelatedPaginatedStates<K, T>>
+    createAutoDisposeFamilyPaginatedStateProvider<K, T>() {
+  return StateNotifierProvider.autoDispose<RelatedPaginatedNotifier<K, T>,
+      RelatedPaginatedStates<K, T>>((ref) {
+    return RelatedPaginatedNotifier<K, T>();
+  });
+}
+
 extension RefExt on Ref {
   ExternalStateProvider<T> asSimple<T>(
     StateNotifierProvider<SimpleNotifier<T>, T?> listenable,

@@ -14,6 +14,19 @@ final myBProvider = Provider<BodyProvider<String>>(
   },
 );
 
+/// State and BodyProvider for the simple auto dispose state example
+final myAutoDisposeSimpleProvider =
+    createAutoDisposeSimpleStateProvider<String>();
+
+final myAutoDisposeBProvider = Provider<BodyProvider<String>>(
+  (Ref ref) {
+    return BodyProvider(
+      state: ref.asSimple(myAutoDisposeSimpleProvider),
+      data: (_) => ref.read(dummyRepProvider).fetchAutoDisposeSimple(),
+    );
+  },
+);
+
 /// State and BodyProvider for the related simple state example
 final myRelatedSimpleProvider = createFamilySimpleStateProvider<int, String>();
 
@@ -53,16 +66,21 @@ final myRelatedPaginatedBProvider =
 );
 
 final dummyRepProvider = Provider<DummyRepository>(
-  (ref) => DummyRepository(
-    myStateNotifier: ref.read(mySimpleProvider.notifier),
-    myPaginatedNotifier: ref.read(myPaginatedProvider.notifier),
-    myRelatedPaginatedNotifier: ref.read(myRelatedPaginatedProvider.notifier),
-    myRelatedSimpleNotifier: ref.read(myRelatedSimpleProvider.notifier),
-  ),
+  (ref) {
+    return DummyRepository(
+      myStateNotifier: ref.read(mySimpleProvider.notifier),
+      readAutoDisposeSimpleNotifier: () =>
+          ref.read(myAutoDisposeSimpleProvider.notifier),
+      myPaginatedNotifier: ref.read(myPaginatedProvider.notifier),
+      myRelatedPaginatedNotifier: ref.read(myRelatedPaginatedProvider.notifier),
+      myRelatedSimpleNotifier: ref.read(myRelatedSimpleProvider.notifier),
+    );
+  },
 );
 
 class DummyRepository {
   final SimpleNotifier<String> myStateNotifier;
+  final SimpleNotifier<String> Function() readAutoDisposeSimpleNotifier;
   final PaginatedNotifier<String> myPaginatedNotifier;
   final RelatedPaginatedNotifier<int, String> myRelatedPaginatedNotifier;
   final RelatedSimpleNotifier<int, String> myRelatedSimpleNotifier;
@@ -70,6 +88,7 @@ class DummyRepository {
 
   DummyRepository({
     required this.myStateNotifier,
+    required this.readAutoDisposeSimpleNotifier,
     required this.myPaginatedNotifier,
     required this.myRelatedPaginatedNotifier,
     required this.myRelatedSimpleNotifier,
@@ -78,6 +97,10 @@ class DummyRepository {
   Future<String> fetchSimple() async {
     // You are in charge of updating the state by calling the `on` method
     return myStateNotifier.on(await _myFakeApiCall());
+  }
+
+  Future<String> fetchAutoDisposeSimple() async {
+    return readAutoDisposeSimpleNotifier().on(await _myFakeApiCall());
   }
 
   Future<String> fetchRelatedSimple(int id) async {

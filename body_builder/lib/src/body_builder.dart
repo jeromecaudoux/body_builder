@@ -111,6 +111,7 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
   final RefreshController _refreshController = RefreshController();
   StreamSubscription? _subscription;
   StreamSubscription? _delaySubscription;
+  bool _isFetching = false;
 
   Iterable<BodyProvider<T>> get providers {
     if (widget.dataProvider != null) {
@@ -269,6 +270,9 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
   }
 
   Future<void> _onStateChanged() async {
+    if (_isFetching) {
+      return;
+    }
     if (widget.fetchDataOnState == true) {
       fetch(allowState: true, allowCache: false, allowData: true);
       return;
@@ -325,7 +329,7 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
       return;
     }
     _subscription?.cancel();
-    _stopListeningStateProviders();
+    _isFetching = true;
     try {
       _subscription = providers
           .resolve(
@@ -345,7 +349,7 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
       _onError(e, s);
       debugPrint('Failed to fetch data: $e\n$s\nFrom:\n${StackTrace.current}');
     } finally {
-      _startListeningStateProviders();
+      _isFetching = false;
     }
   }
 

@@ -1,4 +1,5 @@
 import 'package:body_builder/body_builder.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
 class SimpleNotifier<T> extends StateNotifier<T?> {
@@ -7,6 +8,10 @@ class SimpleNotifier<T> extends StateNotifier<T?> {
   T? get data => state;
 
   T on(T value) {
+    if (!mounted) {
+      debugPrint('StateNotifier is not mounted, skipping state update');
+      return value;
+    }
     state = value;
     return value;
   }

@@ -1,4 +1,5 @@
 import 'package:body_builder/body_builder.dart';
+import 'package:body_builder_example/autodispose_sample_page.dart';
 import 'package:body_builder_example/paginated_page.dart';
 import 'package:body_builder_example/related_paginated_page.dart';
 import 'package:body_builder_example/related_simple_page.dart';
@@ -61,6 +62,17 @@ class _MyHomePageState extends State<MyHomePage> {
                 );
               },
               child: const Text('Basic example'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AutoDisposeSimplePage(),
+                  ),
+                );
+              },
+              child: const Text('Basic auto dispose example'),
             ),
             FilledButton(
               onPressed: () {
