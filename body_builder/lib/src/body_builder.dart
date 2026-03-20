@@ -53,6 +53,7 @@ class BodyBuilder<T> extends StatefulWidget {
   final VoidCallback? onBeforeRefresh;
   final Duration searchFetchDelay;
   final MergeDataStrategy mergeDataStrategy;
+  final Widget? refresherHeader;
 
   const BodyBuilder({
     this.showAppBarOnLoadingAndPlaceholder = false,
@@ -63,6 +64,7 @@ class BodyBuilder<T> extends StatefulWidget {
     this.animationDuration = const Duration(milliseconds: 150),
     this.searchController,
     this.scrollController,
+    this.refresherHeader,
     @Deprecated('Use providers instead') this.stateProvider,
     @Deprecated('Use providers instead') this.cacheProvider,
     @Deprecated('Use providers instead') this.dataProvider,
@@ -171,7 +173,7 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
       return _wrapForAnimations(child);
     }
     child = SmartRefresher(
-      header: const WaterDropHeader(),
+      header: widget.refresherHeader ?? const WaterDropHeader(),
       onRefresh: _onRefresh,
       controller: _refreshController,
       scrollController: widget.scrollController,

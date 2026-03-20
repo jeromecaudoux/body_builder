@@ -1,3 +1,8 @@
+## 1.1.0
+
+* Bump dependencies versions
+* Bump `flutter_riverpod` from ^2.6.1 to ^3.0.3
+
 ## 1.0.1
 
 * Fix state events not emitted with `asFamilySimple`
