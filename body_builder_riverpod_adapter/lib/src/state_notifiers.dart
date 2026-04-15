@@ -16,7 +16,15 @@ class SimpleNotifier<T> extends StateNotifier<T?> {
     return value;
   }
 
-  void clear() => state = null;
+  void clear() {
+    if (!mounted) return;
+    state = null;
+  }
+
+  @override
+  bool updateShouldNotify(T? old, T? current) {
+    return true;
+  }
 }
 
 class RelatedSimpleNotifier<K, T>
@@ -29,15 +37,32 @@ class RelatedSimpleNotifier<K, T>
 
   T? data(K id) => byId(id).data();
 
-  T on(K id, T item) => byId(id).on(item);
+  T on(K id, T item) {
+    byId(id).on(item);
+    if (mounted) {
+      state = rsState; // Trigger state update
+    }
+    return item;
+  }
 
   void clear() {
     for (final key in rsState.keys) {
       byId(key).clear();
     }
+    if (mounted) {
+      state = rsState; // Trigger state update
+    }
   }
 
   T? where(bool Function(T?) test) => rsState.where(test);
+
+  @override
+  bool updateShouldNotify(
+      RelatedStateProvider<K, T> old,
+      RelatedStateProvider<K, T> current,
+      ) {
+    return true;
+  }
 }
 
 class PaginatedNotifier<T> extends StateNotifier<PaginatedState<T>> {
@@ -53,10 +78,25 @@ class PaginatedNotifier<T> extends StateNotifier<PaginatedState<T>> {
 
   int? nbHits(String query) => pState.nbHits(query);
 
-  Iterable<T> on(PaginatedBase<T> response, {String? query}) =>
-      pState.on(response, query: query);
+  Iterable<T> on(PaginatedBase<T> response, {String? query}) {
+    final items = pState.on(response, query: query);
+    if (mounted) {
+      state = pState; // Trigger state update
+    }
+    return items;
+  }
 
-  void clear() => pState.clear();
+  void clear() {
+    pState.clear();
+    if (mounted) {
+      state = pState; // Trigger state update
+    }
+  }
+
+  @override
+  bool updateShouldNotify(PaginatedState<T> old, PaginatedState<T> current) {
+    return true;
+  }
 }
 
 class RelatedPaginatedNotifier<K, T>
@@ -67,5 +107,18 @@ class RelatedPaginatedNotifier<K, T>
 
   PaginatedState<T> byId(K id) => rpState.byId(id);
 
-  void clear() => rpState.clear();
+  void clear() {
+    rpState.clear();
+    if (mounted) {
+      state = rpState; // Trigger state update
+    }
+  }
+
+  @override
+  bool updateShouldNotify(
+      RelatedPaginatedStates<K, T> old,
+      RelatedPaginatedStates<K, T> current,
+      ) {
+    return true;
+  }
 }
