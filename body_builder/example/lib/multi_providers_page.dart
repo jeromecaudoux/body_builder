@@ -18,10 +18,20 @@ class _MultiProversPageState extends State<MultiProversPage> {
   final GlobalKey<BodyBuilderState> _key = GlobalKey();
   bool _forceThrowError = false;
   late final MultiProviderSampleState _state;
+  late final List<BodyProvider<String>> _providers;
 
   @override
   void initState() {
     _state = context.read<MultiProviderSampleState>();
+    _providers = List.generate(
+      _providerCount,
+      (index) => BodyProvider<String>(
+        name: 'Provider $index',
+        state: null,
+        cache: ([params]) => _cacheProvider(index, params),
+        data: ([params]) => _dataProvider(index, params),
+      ),
+    );
     super.initState();
   }
 
@@ -31,15 +41,7 @@ class _MultiProversPageState extends State<MultiProversPage> {
       appBar: _buildAppBar(),
       body: BodyBuilder(
         key: _key,
-        providers: [
-          for (var i = 0; i < _providerCount; i++)
-            BodyProvider(
-              name: 'Provider $i',
-              state: _state.byId(i),
-              cache: (_) => _cacheProvider(i),
-              data: (_) => _dataProvider(i),
-            ),
-        ],
+        providers: _providers,
         customBuilder: _buildBody,
       ),
     );
@@ -98,14 +100,14 @@ class _MultiProversPageState extends State<MultiProversPage> {
     );
   }
 
-  Future<String> _cacheProvider(int id) {
+  Future<String?> _cacheProvider(int id, [DataBuilderParams? params]) {
     return Future.delayed(
       const Duration(milliseconds: 500),
       () => 'Value from cache: $id',
     );
   }
 
-  Future<String> _dataProvider(int id) {
+  Future<String> _dataProvider(int id, [DataBuilderParams? params]) {
     return Future.delayed(
       Duration(milliseconds: 1500 + (5000 * Random().nextDouble()).toInt()),
       () => 'Value from your API: $id',

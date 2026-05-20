@@ -216,6 +216,7 @@ class DataState<T> {
   PaginatedBase<T>? _lastResponse;
 
   Iterable<T> get items => _items;
+  bool get hasData => _items.isNotEmpty;
   bool get hasMore => _lastPage == 0 || _page < _lastPage;
   int get page => _page;
   int get lastPage => _lastPage;

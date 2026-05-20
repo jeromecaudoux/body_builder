@@ -7,8 +7,18 @@ import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:rxdart/rxdart.dart';
 
-typedef CacheProvider<T> = Future<T?> Function(String? query);
-typedef DataProvider<T> = Future<T> Function(String? query);
+class DataBuilderParams {
+  final String? query;
+  final DataState? lastPage;
+
+  const DataBuilderParams({
+    this.query,
+    this.lastPage,
+  });
+}
+
+typedef CacheProvider<T> = Future<T?> Function([DataBuilderParams? params]);
+typedef DataProvider<T> = Future Function([DataBuilderParams? params]);
 
 abstract class BodyProviderBase<T> {
   final String id = UniqueKey().toString();
@@ -66,6 +76,7 @@ class BodyProvider<T> extends BodyProviderBase<T> {
     // Disable state or cache providers if they are not set
     allowState = allowState && state != null;
     allowCache = allowCache && cache != null;
+    DataBuilderParams params = DataBuilderParams(query: query);
 
     final controller = StreamController<BodyState<T>>();
     StreamSubscription<BodyState<T>>? loadSubscription;
@@ -74,15 +85,15 @@ class BodyProvider<T> extends BodyProviderBase<T> {
       if (controller.isClosed || state == null) {
         return;
       }
-      if (state!.hasData(query)) {
-        controller.add(BodyState.data(state!.data(query)));
+      if (state!.hasData(params.query)) {
+        controller.add(BodyState.data(state!.data(params.query)));
         return;
       }
       if (loadSubscription != null) {
         controller.add(BodyState.loading());
         return;
       }
-      loadSubscription = _loadAfterState(query, allowCache, true).listen(
+      loadSubscription = _loadAfterState(params, allowCache, true).listen(
         (event) {
           if (!controller.isClosed) {
             controller.add(event);
@@ -96,7 +107,7 @@ class BodyProvider<T> extends BodyProviderBase<T> {
     controller.onListen = () {
       state!.addListener(addStateSnapshot);
       loadSubscription = _loadState(
-        query: query,
+        params: params,
         allowState: allowState,
         allowCache: allowCache,
         allowData: allowData,
@@ -124,55 +135,55 @@ class BodyProvider<T> extends BodyProviderBase<T> {
   }
 
   Stream<BodyState<T>> _loadState({
-    String? query,
+    required DataBuilderParams params,
     bool allowState = true,
     bool allowCache = true,
     bool allowData = true,
   }) async* {
     if (!allowState) {
-      yield* _loadAfterState(query, allowCache, allowData);
+      yield* _loadAfterState(params, allowCache, allowData);
       return;
     }
-    if (state?.hasData(query) == true) {
-      yield BodyState.data(state!.data(query));
+    if (state?.hasData(params.query) == true) {
+      yield BodyState.data(state!.data(params.query));
       return;
     }
     // allowData is set to true (by force) to avoid being in a situation with no data
-    yield* _loadAfterState(query, allowCache, true);
+    yield* _loadAfterState(params, allowCache, true);
   }
 
   Stream<BodyState<T>> _loadAfterState(
-    String? query,
+    DataBuilderParams params,
     bool allowCache,
     bool allowData,
   ) async* {
     if (allowCache) {
-      yield* _loadCache(query, allowData: allowData);
+      yield* _loadCache(params, allowData: allowData);
     } else if (allowData) {
-      BodyState<T> bState = initialState(query).copy(isLoading: true);
+      BodyState<T> bState = initialState(params.query).copy(isLoading: true);
       yield bState;
-      yield* _loadData(query);
+      yield* _loadData(params);
     }
   }
 
   Stream<BodyState<T>> _loadCache(
-    String? query, {
+    DataBuilderParams params, {
     bool allowData = true,
   }) async* {
     yield BodyState.loading();
     if (cache == null) {
       if (allowData) {
-        yield* _loadData(query);
+        yield* _loadData(params);
       }
       return;
     }
     try {
-      final T? data = await cache!(query);
+      final T? data = await cache!(params);
       if (data != null) {
         yield BodyState.cache(data, isLoading: allowData);
       }
       if (allowData) {
-        yield* _loadData(query);
+        yield* _loadData(params);
       }
     } catch (e, s) {
       debugPrint('Failed to load cache: $e\n$s');
@@ -180,9 +191,9 @@ class BodyProvider<T> extends BodyProviderBase<T> {
     }
   }
 
-  Stream<BodyState<T>> _loadData(String? query) async* {
+  Stream<BodyState<T>> _loadData(DataBuilderParams params) async* {
     try {
-      yield BodyState.data(await data(query));
+      yield BodyState.data(await data(params));
     } catch (e, s) {
       debugPrint('Failed to load data: $e\n$s');
       yield BodyState.error(e, s);
@@ -202,16 +213,16 @@ class CachedBodyProvider<T> extends BodyProvider<T> {
 
   @override
   Stream<BodyState<T>> _loadAfterState(
-    String? query,
+    DataBuilderParams params,
     bool allowCache,
     bool allowData,
   ) {
-    return _loadCache(query, allowData: allowData);
+    return _loadCache(params, allowData: allowData);
   }
 
   @override
   Stream<BodyState<T>> _loadCache(
-    String? query, {
+    DataBuilderParams params, {
     bool allowData = true,
   }) async* {
     yield BodyState.loading();
@@ -221,7 +232,7 @@ class CachedBodyProvider<T> extends BodyProvider<T> {
         yield BodyState.cache(data, isLoading: allowData);
       }
       if (allowData) {
-        yield* _loadData(query);
+        yield* _loadData(params);
       }
     } catch (e, s) {
       debugPrint('Failed to load cache: $e\n$s');
@@ -230,8 +241,8 @@ class CachedBodyProvider<T> extends BodyProvider<T> {
   }
 
   @override
-  Stream<BodyState<T>> _loadData(String? query) {
-    return super._loadData(query).map((BodyState<T> state) {
+  Stream<BodyState<T>> _loadData(DataBuilderParams params) {
+    return super._loadData(params).map((BodyState<T> state) {
       if (state.hasData) {
         T? data = state.data;
         if (data == null) {

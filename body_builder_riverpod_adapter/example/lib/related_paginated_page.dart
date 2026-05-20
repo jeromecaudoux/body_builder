@@ -12,6 +12,7 @@ class RelatedPaginatedPage extends ConsumerStatefulWidget {
 
 class _PaginatedPageState extends ConsumerState<RelatedPaginatedPage> {
   final GlobalKey<BodyBuilderState> _key = GlobalKey();
+  final TextEditingController _controller = TextEditingController();
   int _userId = 1;
 
   @override
@@ -22,8 +23,8 @@ class _PaginatedPageState extends ConsumerState<RelatedPaginatedPage> {
         actions: [
           IconButton(
             onPressed: () {
-              ref.read(myRelatedPaginatedProvider).clear();
-              _key.currentState?.retry();
+              ref.invalidate(myRelatedPaginatedProvider(_userId));
+              //_key.currentState?.retry();
             },
             icon: const Icon(Icons.refresh),
           ),
@@ -50,9 +51,16 @@ class _PaginatedPageState extends ConsumerState<RelatedPaginatedPage> {
       body: Column(
         children: [
           Text('Current user id: $_userId'),
+          TextFormField(
+            controller: _controller,
+            decoration: const InputDecoration(
+              hintText: 'Search...',
+            ),
+          ),
           Expanded(
             child: BodyBuilder(
               key: _key,
+              searchController: _controller,
               providers: [ref.read(myRelatedPaginatedBProvider(_userId))],
               builder: _buildListView,
             ),
@@ -76,5 +84,11 @@ class _PaginatedPageState extends ConsumerState<RelatedPaginatedPage> {
         return ListTile(title: Text(items.elementAt(index)));
       },
     );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 }

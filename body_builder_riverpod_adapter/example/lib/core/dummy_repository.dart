@@ -1,5 +1,4 @@
 import 'package:body_builder/body_builder.dart';
-import 'package:body_builder_example/riverpod_body_provider.dart';
 import 'package:body_builder_riverpod_adapter/body_builder_riverpod_adapter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -10,7 +9,7 @@ final myBProvider = Provider<BodyProviderBase<String>>(
   (Ref ref) {
     return ref.asBodyProvider(
       mySimpleProvider,
-      builder: (_) => ref.read(dummyRepProvider).fetchSimple(),
+      builder: ([params]) => ref.read(dummyRepProvider).fetchSimple(),
     );
   },
 );
@@ -21,9 +20,11 @@ final myAutoDisposeSimpleProvider =
 
 final myAutoDisposeBProvider = Provider<BodyProviderBase<String>>(
   (Ref ref) {
+    print('Creating myAutoDisposeBProvider');
     return ref.asBodyProvider(
       myAutoDisposeSimpleProvider,
-      builder: (_) => ref.read(dummyRepProvider).fetchAutoDisposeSimple(),
+      builder: ([params]) =>
+          ref.read(dummyRepProvider).fetchAutoDisposeSimple(),
     );
   },
 );
@@ -31,11 +32,11 @@ final myAutoDisposeBProvider = Provider<BodyProviderBase<String>>(
 /// State and BodyProvider for the related simple state example
 final myRelatedSimpleProvider = createFamilySimpleStateProvider<int, String>();
 
-final myRelatedSimpleBProvider = Provider.family<BodyProvider<String>, int>(
+final myRelatedSimpleBProvider = Provider.family<BodyProviderBase<String>, int>(
   (Ref ref, int id) {
-    return BodyProvider(
-      state: ref.asFamilySimple(myRelatedSimpleProvider, id),
-      data: (query) => ref.read(dummyRepProvider).fetchRelatedSimple(id),
+    return ref.asBodyProvider(
+      myRelatedSimpleProvider(id),
+      builder: ([params]) => ref.read(dummyRepProvider).fetchRelatedSimple(id),
     );
   },
 );
@@ -47,12 +48,8 @@ final myPaginatedBProvider = Provider<BodyProviderBase<Iterable<String>>>(
   (Ref ref) {
     return ref.asBodyProvider(
       myPaginatedProvider,
-      builder: (query) => ref.read(dummyRepProvider).fetchPaginated(query),
+      builder: ([params]) => ref.read(dummyRepProvider).fetchPaginated(params),
     );
-    // return BodyProvider(
-    //   state: ref.asPaginated(myPaginatedProvider),
-    //   data: (query) => ref.read(dummyRepProvider).fetchPaginated(query),
-    // );
   },
 );
 
@@ -60,57 +57,42 @@ final myPaginatedBProvider = Provider<BodyProviderBase<Iterable<String>>>(
 final myRelatedPaginatedProvider =
     createFamilyPaginatedStateProvider<int, String>();
 
+// 1 - Gérer lorsque un builder se termine apres que le state change (family)
+// 2 - ne pas éxécuter le builder 2 fois en meme temps
+// 3 - Améliorer le pull to refresh
 final myRelatedPaginatedBProvider =
-    Provider.family<BodyProvider<Iterable<String>>, int>(
+    Provider.family<BodyProviderBase<Iterable<String>>, int>(
   (Ref ref, int id) {
-    return BodyProvider(
-      state: ref.asFamilyPaginated(myRelatedPaginatedProvider, id),
-      data: (query) => ref.read(dummyRepProvider).fetchById(id, query),
+    return ref.asBodyProvider(
+      myRelatedPaginatedProvider(id),
+      builder: ([params]) => ref.read(dummyRepProvider).fetchById(id, params),
     );
   },
 );
 
 final dummyRepProvider = Provider<DummyRepository>(
   (ref) {
-    return DummyRepository(
-      myStateNotifier: ref.read(mySimpleProvider.notifier),
-      readAutoDisposeSimpleNotifier: () =>
-          ref.read(myAutoDisposeSimpleProvider.notifier),
-      myPaginatedNotifier: ref.read(myPaginatedProvider.notifier),
-      myRelatedPaginatedNotifier: ref.read(myRelatedPaginatedProvider.notifier),
-      myRelatedSimpleNotifier: ref.read(myRelatedSimpleProvider.notifier),
-    );
+    return DummyRepository();
   },
 );
 
 class DummyRepository {
-  final SimpleNotifier<String> myStateNotifier;
-  final SimpleNotifier<String> Function() readAutoDisposeSimpleNotifier;
-  final PaginatedNotifier<String> myPaginatedNotifier;
-  final RelatedPaginatedNotifier<int, String> myRelatedPaginatedNotifier;
-  final RelatedSimpleNotifier<int, String> myRelatedSimpleNotifier;
   static const int _itemsPerPage = 10;
 
-  DummyRepository({
-    required this.myStateNotifier,
-    required this.readAutoDisposeSimpleNotifier,
-    required this.myPaginatedNotifier,
-    required this.myRelatedPaginatedNotifier,
-    required this.myRelatedSimpleNotifier,
-  });
+  DummyRepository();
 
   Future<String> fetchSimple() async {
     // You are in charge of updating the state by calling the `on` method
-    return myStateNotifier.on(await _myFakeApiCall());
+    return await _myFakeApiCall();
   }
 
   Future<String> fetchAutoDisposeSimple() async {
-    return readAutoDisposeSimpleNotifier().on(await _myFakeApiCall());
+    return await _myFakeApiCall();
   }
 
   Future<String> fetchRelatedSimple(int id) async {
     // You are in charge of updating the state by calling the `on` method
-    return myRelatedSimpleNotifier.byId(id).on(await _myFakeApiCall(id));
+    return await _myFakeApiCall(id);
   }
 
   Future<String> _myFakeApiCall([int? id]) async {
@@ -120,26 +102,31 @@ class DummyRepository {
         'Fetch date: ${now.hour}h ${now.minute}m ${now.second}s';
   }
 
-  Future<Iterable<String>> fetchPaginated(String? query) async {
-    PaginatedState<String> state = myPaginatedNotifier.pState;
-    // Get the previous page from the state (corresponding to the id)
-    int previousPage = state.get(query).page;
-    // Don't forget to update the state by calling the `on` method
-    return state.on(await _dummyResponse(previousPage), query: query);
+  Future<PaginatedResponse<String>> fetchPaginated(
+    DataBuilderParams? params,
+  ) async {
+    int previousPage = params!.lastPage!.page;
+    print(
+      'Get remote data for page ${previousPage + 1} and query <${params.query}> (previous page: $previousPage)',
+    );
+    return await _dummyResponse(previousPage, null, params.query);
   }
 
-  Future<Iterable<String>> fetchById(int id, String? query) async {
-    // Use the `byId` method to get the state of a specific id
-    PaginatedState<String> state = myRelatedPaginatedNotifier.byId(id);
-    // Get the previous page from the state (corresponding to the id)
-    int previousPage = state.get(query).page;
-    // Don't forget to update the state by calling the `on` method
-    return state.on(await _dummyResponse(previousPage, id), query: query);
+  Future<PaginatedResponse<String>> fetchById(
+    int id,
+    DataBuilderParams? params,
+  ) async {
+    int previousPage = params!.lastPage!.page;
+    print(
+      'Get remote data for page ${previousPage + 1} and query <${params.query}> (previous page: $previousPage)',
+    );
+    return await _dummyResponse(previousPage, id, params.query);
   }
 
   Future<PaginatedResponse<String>> _dummyResponse(
     int previousPage, [
     int? id,
+    String? query,
   ]) async {
     await Future.delayed(const Duration(seconds: 2));
 
@@ -153,7 +140,8 @@ class DummyRepository {
       items: [
         /// Generate dummy paginated data
         for (int i = 0; i < _itemsPerPage; i++)
-          '${id == null ? '' : '[$id]'} Value ${previousPage * _itemsPerPage + i}',
+          '${id == null ? '' : '[$id]'} Value ${previousPage * _itemsPerPage + i} '
+              '${query?.isNotEmpty == true ? '($query)' : '<empty query>'}',
       ],
       page: previousPage + 1,
       lastPage: 5,

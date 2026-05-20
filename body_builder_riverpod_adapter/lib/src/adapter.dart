@@ -1,143 +1,173 @@
 import 'package:body_builder/body_builder.dart';
-import 'package:body_builder_riverpod_adapter/src/state_notifiers.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart' hide StateProvider;
+import 'package:collection/collection.dart';
 
-StateNotifierProvider<SimpleNotifier<T>, T?> createSimpleStateProvider<T>() {
-  return StateNotifierProvider<SimpleNotifier<T>, T?>((ref) {
-    return SimpleNotifier<T>(null);
+class SimpleDataNotifier<T> extends StateNotifier<T?> {
+  SimpleDataNotifier(super.state);
+
+  T? get data => state;
+
+  void on(T data) => state = data;
+
+  void clear() => state = null;
+}
+
+class PaginatedDataNotifier<T>
+    extends StateNotifier<Map<String, DataState<T>>> {
+  PaginatedDataNotifier() : super({});
+
+  Iterable<String> get keys => state.keys;
+
+  Iterable<T> data([String? query]) => get(query).items;
+
+  bool hasData([String? query]) => get(query).items.isNotEmpty;
+
+  bool hasMore([String? query]) => get(query).hasMore;
+
+  int? nbHits(String query) => get(query).nbHits;
+
+  DataState<T> get(String? query) =>
+      state[normalizeQuery(query)] ??= DataState();
+
+  @Deprecated('Use "on" instead')
+  Iterable<T> onFetch(String? query, PaginatedBase<T> response) =>
+      on(response, query: query);
+
+  Iterable<T> on(PaginatedBase<T> response, {String? query}) {
+    Iterable<T> items = get(query).on(response);
+    state = state;
+    return items;
+  }
+
+  String normalizeQuery(String? query) => query?.toLowerCase().trim() ?? '';
+
+  void clear() => state = {};
+
+  T add(String query, T item) {
+    get(query).remove(item);
+    get(query).insert(0, item);
+    state = state;
+    return item;
+  }
+
+  void removeItemWhere(bool Function(T element) test, {String? query}) {
+    if (query != null) {
+      get(query).removeWhere(test);
+    } else {
+      for (final DataState<T> state in state.values) {
+        state.removeWhere(test);
+      }
+    }
+    state = state;
+  }
+
+  bool removeItem(T item, {String? query}) {
+    if (query != null) {
+      return get(query).remove(item);
+    }
+    bool removed = false;
+    for (final DataState<T> s in state.values) {
+      if (s.remove(item)) {
+        state = state;
+        removed = true;
+      }
+    }
+    return removed;
+  }
+
+  bool updateItem(T item, {bool addIfMissing = true, bool addFirst = true}) {
+    bool updated = false;
+    for (final DataState<T> s in state.values) {
+      if (s.update(item, addIfMissing: addIfMissing, addFirst: addFirst)) {
+        updated = true;
+      }
+    }
+    state = state;
+    return updated;
+  }
+
+  void remove([String? query]) {
+    state.remove(normalizeQuery(query));
+    state = state;
+  }
+
+  T? itemWhere(bool Function(T) test) =>
+      state.values.expand((element) => element.items).firstWhereOrNull(test);
+
+  @override
+  bool updateShouldNotify(
+    Map<String, DataState<T>> old,
+    Map<String, DataState<T>> current,
+  ) {
+    return true;
+  }
+}
+
+StateNotifierProvider<SimpleDataNotifier<T>, T?>
+    createSimpleStateProvider<T>() {
+  return StateNotifierProvider<SimpleDataNotifier<T>, T?>((ref) {
+    return SimpleDataNotifier<T>(null);
   });
 }
 
-StateNotifierProvider<RelatedSimpleNotifier<K, T>, RelatedStateProvider<K, T>?>
+StateNotifierProviderFamily<SimpleDataNotifier<T>, T?, K>
     createFamilySimpleStateProvider<K, T>() {
-  return StateNotifierProvider<RelatedSimpleNotifier<K, T>,
-      RelatedStateProvider<K, T>?>((ref) {
-    return RelatedSimpleNotifier<K, T>();
-  });
+  return StateNotifierProvider.family<SimpleDataNotifier<T>, T?, K>(
+    (ref, id) => SimpleDataNotifier<T>(null),
+  );
 }
 
-StateNotifierProvider<PaginatedNotifier<T>, PaginatedState<T>>
+StateNotifierProvider<PaginatedDataNotifier<T>, Map<String, DataState<T>>>
     createPaginatedStateProvider<T>() {
-  return StateNotifierProvider<PaginatedNotifier<T>, PaginatedState<T>>((ref) {
-    return PaginatedNotifier<T>();
+  return StateNotifierProvider<PaginatedDataNotifier<T>,
+      Map<String, DataState<T>>>((ref) {
+    return PaginatedDataNotifier<T>();
   });
 }
 
-StateNotifierProvider<RelatedPaginatedNotifier<K, T>,
-    RelatedPaginatedStates<K, T>> createFamilyPaginatedStateProvider<K, T>() {
-  return StateNotifierProvider<RelatedPaginatedNotifier<K, T>,
-      RelatedPaginatedStates<K, T>>((ref) {
-    return RelatedPaginatedNotifier<K, T>();
+StateNotifierProvider<PaginatedDataNotifier<T>, Map<String, DataState<T>>>
+    createPaginatedDataStateProvider<T>() {
+  return StateNotifierProvider<PaginatedDataNotifier<T>,
+      Map<String, DataState<T>>>((ref) {
+    return PaginatedDataNotifier<T>();
   });
+}
+
+StateNotifierProviderFamily<PaginatedDataNotifier<T>, Map<String, DataState<T>>,
+    K> createFamilyPaginatedStateProvider<K, T>() {
+  return StateNotifierProvider.family<PaginatedDataNotifier<T>,
+      Map<String, DataState<T>>, K>(
+    (ref, id) => PaginatedDataNotifier<T>(),
+  );
 }
 
 /* AutoDispose versions */
-StateNotifierProvider<SimpleNotifier<T>, T?>
+StateNotifierProvider<SimpleDataNotifier<T>, T?>
     createAutoDisposeSimpleStateProvider<T>() {
-  return StateNotifierProvider.autoDispose<SimpleNotifier<T>, T?>((ref) {
-    return SimpleNotifier<T>(null);
+  return StateNotifierProvider.autoDispose<SimpleDataNotifier<T>, T?>((ref) {
+    return SimpleDataNotifier<T>(null);
   });
 }
 
-StateNotifierProvider<RelatedSimpleNotifier<K, T>, RelatedStateProvider<K, T>?>
+StateNotifierProviderFamily<SimpleDataNotifier<T>, T?, K>
     createAutoDisposeFamilySimpleStateProvider<K, T>() {
-  return StateNotifierProvider.autoDispose<RelatedSimpleNotifier<K, T>,
-      RelatedStateProvider<K, T>?>((ref) {
-    return RelatedSimpleNotifier<K, T>();
-  });
+  return StateNotifierProvider.autoDispose.family<SimpleDataNotifier<T>, T?, K>(
+    (ref, id) => SimpleDataNotifier<T>(null),
+  );
 }
 
-StateNotifierProvider<PaginatedNotifier<T>, PaginatedState<T>>
+StateNotifierProvider<PaginatedDataNotifier<T>, Map<String, DataState<T>>>
     createAutoDisposePaginatedStateProvider<T>() {
-  return StateNotifierProvider.autoDispose<PaginatedNotifier<T>,
-      PaginatedState<T>>((ref) {
-    return PaginatedNotifier<T>();
+  return StateNotifierProvider.autoDispose<PaginatedDataNotifier<T>,
+      Map<String, DataState<T>>>((ref) {
+    return PaginatedDataNotifier<T>();
   });
 }
 
-StateNotifierProvider<RelatedPaginatedNotifier<K, T>,
-        RelatedPaginatedStates<K, T>>
-    createAutoDisposeFamilyPaginatedStateProvider<K, T>() {
-  return StateNotifierProvider.autoDispose<RelatedPaginatedNotifier<K, T>,
-      RelatedPaginatedStates<K, T>>((ref) {
-    return RelatedPaginatedNotifier<K, T>();
-  });
-}
-
-extension RefExt on Ref {
-  ExternalStateProvider<T> asSimple<T>(
-    StateNotifierProvider<SimpleNotifier<T>, T?> listenable,
-  ) {
-    Map<VoidCallback, ProviderSubscription> listeners = {};
-    return ExternalStateProvider.from(
-      ([String? query]) => read(listenable.notifier).data,
-      onClear: () => read(listenable.notifier).clear(),
-      onAddListener: (VoidCallback listener) {
-        listeners[listener]?.close();
-        listeners[listener] = listen(listenable, (_, __) => listener());
-      },
-      onRemoveListener: (VoidCallback listener) => listeners[listener]?.close(),
-    );
-  }
-
-  ExternalStateProvider<Iterable<T>> asPaginated<T>(
-    StateNotifierProvider<PaginatedNotifier<T>, PaginatedState<T>?> listenable,
-  ) {
-    return _createStateProvider(
-      () => read(listenable.notifier).pState,
-      listenable,
-      isPaginated: true,
-    );
-  }
-
-  ExternalStateProvider<T> asFamilySimple<K, T>(
-    StateNotifierProvider<RelatedSimpleNotifier<K, T>,
-            RelatedStateProvider<K, T>?>
-        listenable,
-    K id,
-  ) {
-    StateProvider<T> pState() => read(listenable.notifier).byId(id);
-    return ExternalStateProvider<T>.from(
-      ([String? query]) => pState().data(query),
-      onClear: () => pState().clear(),
-      onAddListener: (VoidCallback listener) => pState().addListener(listener),
-      onRemoveListener: (VoidCallback listener) =>
-          pState().removeListener(listener),
-    );
-  }
-
-  ExternalStateProvider<Iterable<T>> asFamilyPaginated<K, T>(
-    StateNotifierProvider<RelatedPaginatedNotifier<K, T>,
-            RelatedPaginatedStates<K, T>?>
-        listenable,
-    K id,
-  ) {
-    return _createStateProvider(
-      () => read(listenable.notifier).byId(id),
-      listenable,
-      isPaginated: true,
-    );
-  }
-
-  ExternalStateProvider<T> _createStateProvider<T>(
-    StateProvider<T> Function() pState,
-    StateNotifierProvider listenable, {
-    bool isPaginated = false,
-  }) {
-    Map<VoidCallback, ProviderSubscription> listeners = {};
-    return ExternalStateProvider<T>.from(
-      ([String? query]) => pState().data(query),
-      onClear: () => pState().clear(),
-      externalHasMore:
-          !isPaginated ? null : ([String? query]) => pState().hasMore(query),
-      onAddListener: (VoidCallback listener) {
-        listeners[listener]?.close();
-        listeners[listener] = listen(listenable, (_, __) => listener());
-      },
-      onRemoveListener: (VoidCallback listener) => listeners[listener]?.close(),
-    );
-  }
+StateNotifierProviderFamily<PaginatedDataNotifier<T>, Map<String, DataState<T>>,
+    K> createAutoDisposeFamilyPaginatedStateProvider<K, T>() {
+  return StateNotifierProvider.autoDispose
+      .family<PaginatedDataNotifier<T>, Map<String, DataState<T>>, K>(
+    (ref, id) => PaginatedDataNotifier<T>(),
+  );
 }

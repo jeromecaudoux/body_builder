@@ -1,3 +1,7 @@
+## 1.1.4
+
+* riverpod > Add missing state notify to each states data change
+
 ## 1.1.3
 
 * riverpod > Add missing state notify to each states data change

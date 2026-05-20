@@ -86,6 +86,7 @@ class BodyBuilder<T> extends StatefulWidget {
 class BodyBuilderState<T> extends State<BodyBuilder<T>> {
   StreamSubscription? _subscription;
   StreamSubscription? _delaySubscription;
+  bool _clearDataUntilLoadingStop = false;
 
   late BodyState _state;
 
@@ -145,7 +146,9 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
       setState(() {
         _state = state;
       });
-      return !state.isLoading && !state.isCache && !state.hasError;
+      print(
+          'Initial state has data: ${state.hasData}, is cache: ${state.isCache}, has error: ${state.hasError} => ${state.hasData && !state.isCache && !state.hasError}');
+      return state.hasData && !state.isCache && !state.hasError;
     } catch (e, s) {
       debugPrint('Failed to get initial state: $e\n$s');
       _state = BodyState.error(e, s);
@@ -266,7 +269,6 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
     }
   }
 
-  bool _clearDataUntilLoadingStop = false;
   Future<void> reload({
     bool allowState = false,
     bool allowCache = false,
@@ -301,7 +303,6 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
       await _subscription?.asFuture();
     } catch (e, s) {
       _onError(e, s);
-      debugPrint('Failed to fetch data: $e\n$s\nFrom:\n${StackTrace.current}');
     }
   }
 

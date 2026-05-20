@@ -57,18 +57,18 @@ class _SearchSamplePageState extends State<SearchSamplePage> {
     );
   }
 
-  Future<Iterable<String>> _dataProvider(String? query) {
+  Future<Iterable<String>> _dataProvider([DataBuilderParams? params]) {
     return Future.delayed(
       const Duration(milliseconds: 500),
       () => _animals.where((element) =>
-          element.toLowerCase().contains(query?.toLowerCase() ?? '')),
+          element.toLowerCase().contains(params?.query?.toLowerCase() ?? '')),
     ).then(
       /// - The state will store the data in memory for each query.
       /// The BodyBuilder will then skip the data provider and use the
       /// state's data if the same query is requested again.
       /// - SinglePageState is a here to help when the search response
       /// is not paginated.
-      (value) => _state.on(SinglePageState(value), query: query),
+      (value) => _state.on(SinglePageState(value), query: params?.query),
     );
   }
 

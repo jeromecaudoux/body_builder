@@ -12,6 +12,7 @@ class PaginatedPage extends ConsumerStatefulWidget {
 
 class _PaginatedPageState extends ConsumerState<PaginatedPage> {
   final GlobalKey<BodyBuilderState> _key = GlobalKey();
+  final TextEditingController _controller = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -21,17 +22,35 @@ class _PaginatedPageState extends ConsumerState<PaginatedPage> {
         actions: [
           IconButton(
             onPressed: () {
-              ref.read(myPaginatedProvider).clear();
+              ref.invalidate(myPaginatedProvider);
+            },
+            icon: const Icon(Icons.delete),
+          ),
+          IconButton(
+            onPressed: () {
               _key.currentState?.retry();
             },
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh_outlined),
           ),
         ],
       ),
-      body: BodyBuilder(
-        key: _key,
-        providers: [ref.read(myPaginatedBProvider)],
-        builder: _buildListView,
+      body: Column(
+        children: [
+          TextFormField(
+            controller: _controller,
+            decoration: const InputDecoration(
+              hintText: 'Search...',
+            ),
+          ),
+          Expanded(
+            child: BodyBuilder(
+              key: _key,
+              searchController: _controller,
+              providers: [ref.watch(myPaginatedBProvider)],
+              builder: _buildListView,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -50,5 +69,11 @@ class _PaginatedPageState extends ConsumerState<PaginatedPage> {
         return ListTile(title: Text(items.elementAt(index)));
       },
     );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 }

@@ -101,14 +101,14 @@ class _CustomBuilderPageState extends State<CustomBuilderPage> {
     );
   }
 
-  Future<String> _cacheProvider(String? query) {
+  Future<String> _cacheProvider([DataBuilderParams? params]) {
     return Future.delayed(
       const Duration(milliseconds: 500),
       () => 'Value from cache',
     );
   }
 
-  Future<String> _dataProvider(String? query) {
+  Future<String> _dataProvider([DataBuilderParams? params]) {
     return Future.delayed(
       const Duration(seconds: 2),
       () => 'Value from your API',

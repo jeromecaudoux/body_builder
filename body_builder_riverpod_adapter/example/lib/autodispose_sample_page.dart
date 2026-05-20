@@ -63,6 +63,7 @@ class _AutoDisposeSimplePageState extends ConsumerState<AutoDisposeSimplePage> {
   }
 
   Widget _buildBodyBuilder() {
+    print('Building BodyBuilder');
     return Column(
       children: [
         TextButton(
