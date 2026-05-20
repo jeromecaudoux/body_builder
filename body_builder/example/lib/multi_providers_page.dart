@@ -5,7 +5,7 @@ import 'package:body_builder_example/states.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-const int _providerCount = 20;
+const int _providerCount = 3;
 
 class MultiProversPage extends StatefulWidget {
   const MultiProversPage({super.key});
@@ -68,9 +68,6 @@ class _MultiProversPageState extends State<MultiProversPage> {
   }
 
   Widget _buildBody(BodyState state) {
-    if (state.isLoading && !state.hasData) {
-      return const Center(child: CircularProgressIndicator());
-    }
     return ListView(
       children: [
         for (var i = 0; i < _providerCount; i++)
@@ -94,7 +91,8 @@ class _MultiProversPageState extends State<MultiProversPage> {
           ? const SizedBox.square(
               dimension: 16,
               child: CircularProgressIndicator(strokeWidth: 2),
-            ) : state.hasError
+            )
+          : state.hasError
               ? const Icon(Icons.error, color: Colors.red)
               : const Icon(Icons.check, color: Colors.green),
     );

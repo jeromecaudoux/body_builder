@@ -28,9 +28,20 @@ final class BodyState<T> {
     StackTrace? errorStack,
     bool? combinedStates,
     String? providerName,
+    bool clearData = false,
   }) {
+    H? newData = data ?? this.data as H?;
+    if (clearData) {
+      if (this.combinedStates == true) {
+        newData = (this.data as Iterable<BodyState>?)
+            ?.map((state) => state.copy(clearData: true))
+            .toList() as H?;
+      } else {
+        newData = null;
+      }
+    }
     return BodyState._(
-      data: (data ?? this.data) as H?,
+      data: newData,
       isCache: isCache ?? this.isCache,
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,

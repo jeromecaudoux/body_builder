@@ -1,15 +1,16 @@
 import 'package:body_builder/body_builder.dart';
+import 'package:body_builder_example/riverpod_body_provider.dart';
 import 'package:body_builder_riverpod_adapter/body_builder_riverpod_adapter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// State and BodyProvider for the simple state example
 final mySimpleProvider = createSimpleStateProvider<String>();
 
-final myBProvider = Provider<BodyProvider<String>>(
+final myBProvider = Provider<BodyProviderBase<String>>(
   (Ref ref) {
-    return BodyProvider(
-      state: ref.asSimple(mySimpleProvider),
-      data: (_) => ref.read(dummyRepProvider).fetchSimple(),
+    return ref.asBodyProvider(
+      mySimpleProvider,
+      builder: (_) => ref.read(dummyRepProvider).fetchSimple(),
     );
   },
 );
@@ -18,11 +19,11 @@ final myBProvider = Provider<BodyProvider<String>>(
 final myAutoDisposeSimpleProvider =
     createAutoDisposeSimpleStateProvider<String>();
 
-final myAutoDisposeBProvider = Provider<BodyProvider<String>>(
+final myAutoDisposeBProvider = Provider<BodyProviderBase<String>>(
   (Ref ref) {
-    return BodyProvider(
-      state: ref.asSimple(myAutoDisposeSimpleProvider),
-      data: (_) => ref.read(dummyRepProvider).fetchAutoDisposeSimple(),
+    return ref.asBodyProvider(
+      myAutoDisposeSimpleProvider,
+      builder: (_) => ref.read(dummyRepProvider).fetchAutoDisposeSimple(),
     );
   },
 );
@@ -42,12 +43,16 @@ final myRelatedSimpleBProvider = Provider.family<BodyProvider<String>, int>(
 /// State and BodyProvider for the paginated state example
 final myPaginatedProvider = createPaginatedStateProvider<String>();
 
-final myPaginatedBProvider = Provider<BodyProvider<Iterable<String>>>(
+final myPaginatedBProvider = Provider<BodyProviderBase<Iterable<String>>>(
   (Ref ref) {
-    return BodyProvider(
-      state: ref.asPaginated(myPaginatedProvider),
-      data: (query) => ref.read(dummyRepProvider).fetchPaginated(query),
+    return ref.asBodyProvider(
+      myPaginatedProvider,
+      builder: (query) => ref.read(dummyRepProvider).fetchPaginated(query),
     );
+    // return BodyProvider(
+    //   state: ref.asPaginated(myPaginatedProvider),
+    //   data: (query) => ref.read(dummyRepProvider).fetchPaginated(query),
+    // );
   },
 );
 

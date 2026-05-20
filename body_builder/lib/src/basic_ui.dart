@@ -21,11 +21,9 @@ Widget defaultProgressBuilder({
 Widget buildDefaultErrorPlaceholder(
   dynamic error,
   StackTrace? errorStack,
-  VoidCallback onRetry, {
-  bool showAppBar = false,
-  bool placeHolderImage = true,
-}) {
-  Widget child = ScrollConfiguration(
+  VoidCallback onRetry,
+) {
+  return ScrollConfiguration(
     behavior: const MaterialScrollBehavior().copyWith(overscroll: false),
     child: Padding(
       padding: const EdgeInsets.all(32),
@@ -34,20 +32,10 @@ Widget buildDefaultErrorPlaceholder(
           error,
           errorStack,
           onRetry,
-          placeHolderImage: placeHolderImage,
         ),
       ),
     ),
   );
-  if (showAppBar) {
-    child = Column(
-      children: [
-        AppBar(),
-        Expanded(child: child),
-      ],
-    );
-  }
-  return child;
 }
 
 class SimpleErrorPlaceholder extends StatelessWidget {

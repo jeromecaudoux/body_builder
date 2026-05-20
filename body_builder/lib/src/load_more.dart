@@ -31,17 +31,12 @@ class LoadMore extends StatefulWidget {
 class _LoadMoreState extends State<LoadMore> {
   @override
   void initState() {
-    if (!widget.useButton) {
-      widget.bodyBuilderKey?.currentState?.loadMoreIfNeeded();
-    }
     super.initState();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
     if (!widget.useButton) {
-      widget.bodyBuilderKey?.currentState?.loadMoreIfNeeded();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        widget.bodyBuilderKey?.currentState?.loadMoreIfNeeded();
+      });
     }
   }
 

@@ -7,8 +7,7 @@ class SimplePage extends ConsumerStatefulWidget {
   const SimplePage({super.key});
 
   @override
-  ConsumerState<SimplePage> createState() =>
-      _BasicBodyBuilderPageState();
+  ConsumerState<SimplePage> createState() => _BasicBodyBuilderPageState();
 }
 
 class _BasicBodyBuilderPageState extends ConsumerState<SimplePage> {
@@ -28,7 +27,10 @@ class _BasicBodyBuilderPageState extends ConsumerState<SimplePage> {
             icon: const Icon(Icons.rocket_launch),
           ),
           IconButton(
-            onPressed: () => _key.currentState?.retry(allowState: false),
+            onPressed: () {
+              //ref.read(mySimpleProvider.notifier).clear();
+              _key.currentState?.retry(allowState: false);
+            },
             icon: const Icon(Icons.refresh),
           ),
         ],

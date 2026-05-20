@@ -31,6 +31,10 @@ class _BasicBodyBuilderPageState extends State<BasicBodyBuilderPage> {
             icon: const Icon(Icons.rocket_launch),
           ),
           IconButton(
+            onPressed: () => _state.clear(),
+            icon: const Icon(Icons.delete),
+          ),
+          IconButton(
             onPressed: () => _key.currentState?.retry(allowState: false),
             icon: const Icon(Icons.refresh),
           ),

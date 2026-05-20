@@ -26,7 +26,7 @@ class _AutoDisposeSimplePageState extends ConsumerState<AutoDisposeSimplePage> {
               builder: (context) => SizedBox(
                 height: 200,
                 child: BodyBuilder(
-                  providers: [ref.read(myAutoDisposeBProvider)],
+                  providers: [ref.watch(myAutoDisposeBProvider)],
                   builder: (String data) => Center(child: Text(data)),
                 ),
               ),
@@ -42,16 +42,43 @@ class _AutoDisposeSimplePageState extends ConsumerState<AutoDisposeSimplePage> {
             icon: const Icon(Icons.rocket_launch),
           ),
           IconButton(
+            onPressed: () =>
+                ref.read(myAutoDisposeSimpleProvider.notifier).clear(),
+            tooltip: 'Clear state value',
+            icon: const Icon(Icons.delete),
+          ),
+          IconButton(
             onPressed: () => _key.currentState?.retry(allowState: false),
             icon: const Icon(Icons.refresh),
           ),
         ],
       ),
-      body: BodyBuilder(
-        key: _key,
-        providers: [ref.read(myAutoDisposeBProvider)],
-        builder: (String data) => Center(child: Text(data)),
+      body: Column(
+        children: [
+          //_buildBodyBuilder(),
+          _buildBodyBuilder(),
+        ],
       ),
+    );
+  }
+
+  Widget _buildBodyBuilder() {
+    return Column(
+      children: [
+        TextButton(
+          onPressed: () => ref.invalidate(myAutoDisposeBProvider),
+          child: const Text('Invalidate bprovider'),
+        ),
+        TextButton(
+          onPressed: () => ref.invalidate(myAutoDisposeSimpleProvider),
+          child: const Text('Invalidate state'),
+        ),
+        BodyBuilder(
+          key: _key,
+          providers: [ref.watch(myAutoDisposeBProvider)],
+          builder: (String data) => Center(child: Text(data)),
+        ),
+      ],
     );
   }
 }

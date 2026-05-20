@@ -22,7 +22,7 @@ class _PaginatedPageState extends ConsumerState<RelatedSimplePage> {
         actions: [
           IconButton(
             onPressed: () {
-              ref.read(myRelatedSimpleProvider)?.clear();
+              //ref.read(myRelatedSimpleProvider.notifier).clear();
               _key.currentState?.retry();
             },
             icon: const Icon(Icons.refresh),

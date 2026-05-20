@@ -1,14 +1,14 @@
 // ignore_for_file: deprecated_member_use_from_same_package
 
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:body_builder/src/basic_ui.dart';
 import 'package:body_builder/src/body_provider.dart';
 import 'package:body_builder/src/body_state.dart';
-import 'package:body_builder/src/state_provider.dart';
 import 'package:body_builder/src/typedefs_child_body_builder.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:pull_to_refresh/pull_to_refresh.dart';
 
 class BodyBuilderConfig {
   static BodyBuilderConfig? _instance;
@@ -32,49 +32,26 @@ class BodyBuilderConfig {
 class BodyBuilder<T> extends StatefulWidget {
   final Function? builder;
   final CustomBuilder? customBuilder;
-  @Deprecated('Use providers instead')
-  final StateProvider? stateProvider;
-  @Deprecated('Use providers instead')
-  final Function? cacheProvider;
-  @Deprecated('Use providers instead')
-  final Function? dataProvider;
-  final Iterable<BodyProvider<T>>? providers;
+  final Iterable<BodyProviderBase<T>> providers;
   final Widget? progressBuilder;
   final ErrorBuilder? errorBuilder;
   final ChildWrapper? childWrapper;
-  final bool showAppBarOnLoadingAndPlaceholder;
-  final bool fetchDataOnState;
-  final bool listenState;
-  final bool placeHolderImage;
-  final bool clearDataOnRefresh;
   final Duration? animationDuration;
   final TextEditingController? searchController;
   final ScrollController? scrollController;
-  final VoidCallback? onBeforeRefresh;
   final Duration searchFetchDelay;
   final MergeDataStrategy mergeDataStrategy;
-  final Widget? refresherHeader;
 
   const BodyBuilder({
-    this.showAppBarOnLoadingAndPlaceholder = false,
-    this.placeHolderImage = true,
-    this.listenState = true,
-    this.clearDataOnRefresh = true,
-    this.fetchDataOnState = false,
     this.animationDuration = const Duration(milliseconds: 150),
     this.searchController,
     this.scrollController,
-    this.refresherHeader,
-    @Deprecated('Use providers instead') this.stateProvider,
-    @Deprecated('Use providers instead') this.cacheProvider,
-    @Deprecated('Use providers instead') this.dataProvider,
-    this.providers,
+    required this.providers,
     this.progressBuilder,
     this.errorBuilder,
     this.customBuilder,
     this.childWrapper,
     this.builder,
-    this.onBeforeRefresh,
     this.mergeDataStrategy = MergeDataStrategy.allAtOne,
     this.searchFetchDelay = const Duration(milliseconds: 400),
     super.key,
@@ -86,10 +63,7 @@ class BodyBuilder<T> extends StatefulWidget {
           builder != null || customBuilder != null,
           'A valid builder is required',
         ),
-        assert(
-          (providers?.length ?? 0) > 0 || dataProvider != null,
-          'At least one provider is required',
-        );
+        assert(providers.length > 0, 'At least one provider is required');
 
   static void setDefaultConfig({
     ProgressBuilder? defaultProgressBuilder,
@@ -110,39 +84,10 @@ class BodyBuilder<T> extends StatefulWidget {
 }
 
 class BodyBuilderState<T> extends State<BodyBuilder<T>> {
-  final RefreshController _refreshController = RefreshController();
   StreamSubscription? _subscription;
   StreamSubscription? _delaySubscription;
-  bool _isFetching = false;
 
-  Iterable<BodyProvider<T>> get providers {
-    if (widget.dataProvider != null) {
-      return [
-        // todo remove this shit asap lol
-        BodyProvider(
-          name: 'SupportDeprecatedBodyProvider',
-          state: widget.stateProvider as StateProvider<T>?,
-          cache: widget.cacheProvider != null
-              ? (String? query) async {
-                  if (widget.cacheProvider is! CacheProvider) {
-                    return (await widget.cacheProvider?.call()) as T?;
-                  }
-                  return (await widget.cacheProvider?.call(query)) as T?;
-                }
-              : null,
-          data: (String? query) async {
-            if (widget.dataProvider is! DataProvider) {
-              return (await widget.dataProvider?.call()) as T;
-            }
-            return (await widget.dataProvider!(query)) as T;
-          },
-        ),
-      ];
-    }
-    return widget.providers!;
-  }
-
-  BodyState _state = BodyState.loading();
+  late BodyState _state;
 
   BodyState get state => _state;
 
@@ -161,9 +106,51 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
   @override
   void initState() {
     widget.searchController?.addListener(delayedFetch);
-    _startListeningStateProviders();
-    fetch(allowState: true, allowCache: true, ignoreLoading: true);
+    reload(allowState: true, allowCache: true, ignoreLoading: true);
     super.initState();
+  }
+
+  @override
+  void didUpdateWidget(covariant BodyBuilder<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    bool providersChanged = !listEquals(
+      oldWidget.providers.map((e) => e.id).toList(),
+      widget.providers.map((e) => e.id).toList(),
+    );
+    if (providersChanged) {
+      reload(allowState: true, allowCache: true, ignoreLoading: true);
+    } else if (oldWidget.searchController != widget.searchController) {
+      oldWidget.searchController?.removeListener(delayedFetch);
+      widget.searchController?.addListener(delayedFetch);
+    } else if (oldWidget.scrollController != widget.scrollController) {
+      // No need to listen to scrollController changes, as we read it directly when needed (in loadMoreIfNeeded)
+    }
+  }
+
+  bool _initialState() {
+    if (!mounted) {
+      return true;
+    }
+    try {
+      BodyState? state = widget.providers.initialState(
+        widget.searchController?.text ?? '',
+        mergeStrategy: widget.mergeDataStrategy,
+      );
+
+      if (kDebugMode && BodyBuilderConfig.instance.debugLogsEnabled) {
+        log('--- _initialState -> resolved -> Start ---');
+        log('Merged state: $state');
+        log('--- _initialState -> resolved -> End ---');
+      }
+      setState(() {
+        _state = state;
+      });
+      return !state.isLoading && !state.isCache && !state.hasError;
+    } catch (e, s) {
+      debugPrint('Failed to get initial state: $e\n$s');
+      _state = BodyState.error(e, s);
+      return true;
+    }
   }
 
   @override
@@ -172,14 +159,6 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
     if (widget.scrollController == null) {
       return _wrapForAnimations(child);
     }
-    child = SmartRefresher(
-      header: widget.refresherHeader ?? const WaterDropHeader(),
-      onRefresh: _onRefresh,
-      controller: _refreshController,
-      scrollController: widget.scrollController,
-      child: _buildMainContent(),
-    );
-
     ChildWrapper? childWrapper =
         widget.childWrapper ?? BodyBuilderConfig._instance?.childWrapper;
     return childWrapper?.call(child, _state, retry) ?? child;
@@ -253,38 +232,14 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
     ProgressBuilder? progressBuilder =
         BodyBuilderConfig._instance?.defaultProgressBuilder ??
             defaultProgressBuilder;
-    return progressBuilder(
-      showAppBar: widget.showAppBarOnLoadingAndPlaceholder,
-    );
+    return progressBuilder();
   }
 
   Widget _buildError() {
     ErrorBuilder? errorBuilder = widget.errorBuilder ??
         BodyBuilderConfig._instance?.defaultErrorBuilder ??
         buildDefaultErrorPlaceholder;
-    return errorBuilder(
-      _state.error!,
-      _state.errorStack,
-      retry,
-      showAppBar: widget.showAppBarOnLoadingAndPlaceholder,
-      placeHolderImage: widget.placeHolderImage,
-    );
-  }
-
-  Future<void> _onStateChanged() async {
-    if (_isFetching) {
-      return;
-    }
-    if (widget.fetchDataOnState == true) {
-      fetch(allowState: true, allowCache: false, allowData: true);
-      return;
-    }
-    return fetch(
-      allowState: true,
-      allowCache: false,
-      allowData: false,
-      clearData: false,
-    );
+    return errorBuilder(_state.error!, _state.errorStack, retry);
   }
 
   /// Will re-execute the providers.
@@ -294,7 +249,7 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
   /// [setState] call, without having to worry about the providers not being
   /// updated (at the next rebuild).
   void retry({bool allowState = false, bool waitNextFrame = true}) {
-    task() => fetch(
+    task() => reload(
           allowState: allowState,
           allowCache: true,
           allowData: true,
@@ -311,7 +266,8 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
     }
   }
 
-  Future<void> fetch({
+  bool _clearDataUntilLoadingStop = false;
+  Future<void> reload({
     bool allowState = false,
     bool allowCache = false,
     bool allowData = true,
@@ -323,7 +279,8 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
     }
     if (clearData) {
       setState(() {
-        _state = BodyState.loading();
+        _clearDataUntilLoadingStop = true;
+        _state = _state.copy(isLoading: true, clearData: true);
       });
     }
     if (allowState && _initialState()) {
@@ -331,9 +288,8 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
       return;
     }
     _subscription?.cancel();
-    _isFetching = true;
     try {
-      _subscription = providers
+      _subscription = widget.providers
           .resolve(
             query: widget.searchController?.text ?? '',
             allowState: allowState,
@@ -343,31 +299,10 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
           )
           .listen(_onState, onError: _onError);
       await _subscription?.asFuture();
-      setState(() {
-        _refreshController.refreshCompleted();
-      });
     } catch (e, s) {
-      _refreshController.refreshFailed();
       _onError(e, s);
       debugPrint('Failed to fetch data: $e\n$s\nFrom:\n${StackTrace.current}');
-    } finally {
-      _isFetching = false;
     }
-  }
-
-  bool _initialState() {
-    if (!mounted) {
-      return true;
-    }
-    BodyState? state =
-        providers.initialState(widget.searchController?.text ?? '');
-    if (state.hasData) {
-      setState(() {
-        _state = state;
-      });
-      return !state.isLoading && !state.isCache && !state.hasError;
-    }
-    return false;
   }
 
   void _onError(Object e, StackTrace s) {
@@ -375,50 +310,24 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
     // Just print it and send an error to the UI
     debugPrint('Failed to resolve provider(s): $e\n$s');
     setState(() {
-      _state = BodyState.error(e, s);
+      _state = _state.copy(
+        error: e,
+        errorStack: s,
+        clearData: true,
+        isLoading: false,
+      );
     });
   }
 
   void _onState(BodyState state) {
-    if (_state.hasData && !state.hasData) {
-      // If we got an error are if we are loading a new page then
-      // we want to keep the last data
-      // To clear the data you should call fetch with clearData = true
-      state = state.copy(data: _state.data, isCache: _state.isCache);
-    }
     setState(() {
-      _state = state;
+      _state = state.copy(
+        clearData: _clearDataUntilLoadingStop && state.isLoading,
+      );
+      if (_clearDataUntilLoadingStop && !_state.isLoading) {
+        _clearDataUntilLoadingStop = false;
+      }
     });
-  }
-
-  void _onRefresh() {
-    if (widget.onBeforeRefresh != null) {
-      widget.onBeforeRefresh?.call();
-    } else {
-      providers
-          .map((e) => e.state)
-          .whereType<StateProvider>()
-          .forEach((StateProvider provider) {
-        provider.clear();
-      });
-    }
-    fetch(ignoreLoading: true, clearData: widget.clearDataOnRefresh);
-  }
-
-  void _startListeningStateProviders() {
-    if (widget.listenState) {
-      for (final BodyProvider provider in providers) {
-        provider.state?.addListener(_onStateChanged);
-      }
-    }
-  }
-
-  void _stopListeningStateProviders() {
-    if (widget.listenState) {
-      for (final BodyProvider provider in providers) {
-        provider.state?.removeListener(_onStateChanged);
-      }
-    }
   }
 
   void delayedFetch({
@@ -430,7 +339,7 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
     _delaySubscription =
         Future.delayed(widget.searchFetchDelay).asStream().listen((event) {
       if (mounted) {
-        fetch(
+        reload(
           allowState: allowState,
           allowCache: allowCache,
           clearData: clearData,
@@ -440,28 +349,27 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
     });
   }
 
-  void loadMoreIfNeeded() {
+  Future<void> loadMoreIfNeeded() {
     if (hasMore()) {
-      fetch();
+      return reload();
     }
+    return Future.value();
   }
 
   bool hasMore() {
-    Iterable<BodyProvider> result = providers.where((e) => e.isPaginated);
+    Iterable<BodyProviderBase> result =
+        widget.providers.where((e) => e.isPaginated);
     assert(
       result.length == 1,
       'Found ${result.length} paginated providers, expected 1.',
     );
-    return result.first.state?.hasMore(widget.searchController?.text ?? '') ==
-        true;
+    return result.first.hasMore(widget.searchController?.text ?? '');
   }
 
   @override
   void dispose() {
     widget.searchController?.removeListener(delayedFetch);
     _subscription?.cancel();
-    _refreshController.dispose();
-    _stopListeningStateProviders();
     super.dispose();
   }
 }

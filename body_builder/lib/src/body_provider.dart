@@ -11,9 +11,14 @@ typedef CacheProvider<T> = Future<T?> Function(String? query);
 typedef DataProvider<T> = Future<T> Function(String? query);
 
 abstract class BodyProviderBase<T> {
+  final String id = UniqueKey().toString();
   final String? name;
 
-  const BodyProviderBase({this.name});
+  BodyProviderBase({this.name});
+
+  bool get isPaginated;
+
+  bool hasMore([String? query]);
 
   BodyState<T> initialState(String? query);
 
@@ -30,14 +35,18 @@ class BodyProvider<T> extends BodyProviderBase<T> {
   final CacheProvider<T>? cache;
   final DataProvider<T> data;
 
-  const BodyProvider({
+  BodyProvider({
     this.state,
     this.cache,
     required this.data,
     super.name,
   });
 
+  @override
   bool get isPaginated => state?.isPaginated == true;
+
+  @override
+  bool hasMore([String? query]) => state?.hasMore(query) == true;
 
   @override
   BodyState<T> initialState(String? query) {
@@ -53,17 +62,65 @@ class BodyProvider<T> extends BodyProviderBase<T> {
     bool allowState = true,
     bool allowCache = true,
     bool allowData = true,
-  }) async* {
+  }) {
     // Disable state or cache providers if they are not set
     allowState = allowState && state != null;
     allowCache = allowCache && cache != null;
 
-    yield* _loadState(
-      query: query,
-      allowState: allowState,
-      allowCache: allowCache,
-      allowData: allowData,
-    );
+    final controller = StreamController<BodyState<T>>();
+    StreamSubscription<BodyState<T>>? loadSubscription;
+
+    void addStateSnapshot() {
+      if (controller.isClosed || state == null) {
+        return;
+      }
+      if (state!.hasData(query)) {
+        controller.add(BodyState.data(state!.data(query)));
+        return;
+      }
+      if (loadSubscription != null) {
+        controller.add(BodyState.loading());
+        return;
+      }
+      loadSubscription = _loadAfterState(query, allowCache, true).listen(
+        (event) {
+          if (!controller.isClosed) {
+            controller.add(event);
+          }
+        },
+        onError: controller.addError,
+        onDone: () => loadSubscription = null,
+      );
+    }
+
+    controller.onListen = () {
+      state!.addListener(addStateSnapshot);
+      loadSubscription = _loadState(
+        query: query,
+        allowState: allowState,
+        allowCache: allowCache,
+        allowData: allowData,
+      ).listen(
+        (event) {
+          if (!controller.isClosed) {
+            controller.add(event);
+          }
+        },
+        onError: controller.addError,
+        onDone: () => loadSubscription = null,
+      );
+    };
+
+    controller.onCancel = () async {
+      state?.removeListener(addStateSnapshot);
+      await loadSubscription?.cancel();
+      loadSubscription = null;
+      if (!controller.isClosed) {
+        await controller.close();
+      }
+    };
+
+    return controller.stream;
   }
 
   Stream<BodyState<T>> _loadState({
@@ -92,9 +149,8 @@ class BodyProvider<T> extends BodyProviderBase<T> {
     if (allowCache) {
       yield* _loadCache(query, allowData: allowData);
     } else if (allowData) {
-      // #loading is emitted here only and not inside _loadData to avoid
-      // clearing the data from cache between the cache and data providers
-      yield BodyState.loading();
+      BodyState<T> bState = initialState(query).copy(isLoading: true);
+      yield bState;
       yield* _loadData(query);
     }
   }
@@ -192,7 +248,7 @@ class CachedBodyProvider<T> extends BodyProvider<T> {
 extension ProviderExt on Iterable<BodyProviderBase> {
   BodyState initialState(
     String? query, {
-    MergeDataStrategy mergeStrategy = MergeDataStrategy.allAtOne,
+    required MergeDataStrategy mergeStrategy,
   }) {
     return _merge(
       map((state) => state.initialState(query).copy(providerName: state.name)),
@@ -219,7 +275,15 @@ extension ProviderExt on Iterable<BodyProviderBase> {
             .map((BodyState event) => event.copy(providerName: provider.name)),
       ),
       (Iterable<BodyState> states) => _merge(states, mergeStrategy),
-    ).map((event) => event.copy(combinedStates: true));
+    ).map((event) {
+      BodyState bState = event.copy(combinedStates: true);
+      if (kDebugMode && BodyBuilderConfig.instance.debugLogsEnabled) {
+        log('--- ProviderExt -> resolved -> Start ---');
+        log('Merged state: $bState');
+        log('--- ProviderExt -> resolved -> End ---');
+      }
+      return bState;
+    });
   }
 
   BodyState _merge(
@@ -243,11 +307,15 @@ extension ProviderExt on Iterable<BodyProviderBase> {
         states.firstWhereOrNull((state) => state.error != null);
     if (errorState != null) {
       return BodyState.error(errorState.error!, errorState.errorStack)
-          .copy(data: states);
+          .copy(data: states, isLoading: oneIsLoading);
     }
     switch (strategy) {
       case MergeDataStrategy.allAtOne:
-        return BodyState.loading();
+        return BodyState.loading().copy(
+          data: states
+              .map((state) => state.copy(clearData: true, isLoading: true))
+              .toList(),
+        );
       case MergeDataStrategy.oneByOne:
         return BodyState.loading().copy(data: states);
     }
