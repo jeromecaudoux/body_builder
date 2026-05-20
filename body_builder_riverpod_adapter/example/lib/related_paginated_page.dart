@@ -33,7 +33,7 @@ class _PaginatedPageState extends ConsumerState<RelatedPaginatedPage> {
               setState(() {
                 _userId--;
               });
-              _key.currentState?.retry(allowState: true);
+              _key.currentState?.reload(allowState: true);
             },
             icon: const Icon(Icons.remove),
           ),
@@ -42,7 +42,7 @@ class _PaginatedPageState extends ConsumerState<RelatedPaginatedPage> {
               setState(() {
                 _userId++;
               });
-              _key.currentState?.retry(allowState: true);
+              _key.currentState?.reload(allowState: true);
             },
             icon: const Icon(Icons.add),
           ),

@@ -1,9 +1,7 @@
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:body_builder/body_builder.dart';
 import 'package:cache_annotations/annotations.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:rxdart/rxdart.dart';
 
@@ -30,13 +28,14 @@ abstract class BodyProviderBase<T> {
 
   bool hasMore([String? query]);
 
-  BodyState<T> initialState(String? query);
+  Stream<BodyState<T>> listen(String? query);
 
-  Stream<BodyState<T>> resolve({
+  void execute({
     String? query,
     bool allowState = true,
     bool allowCache = true,
     bool allowData = true,
+    bool clearData = false,
   });
 }
 
@@ -44,6 +43,10 @@ class BodyProvider<T> extends BodyProviderBase<T> {
   final StateProvider<T>? state;
   final CacheProvider<T>? cache;
   final DataProvider<T> data;
+  final Map<String, BehaviorSubject<BodyState<T>>> _subjects =
+      <String, BehaviorSubject<BodyState<T>>>{};
+  final Map<String, StreamSubscription<BodyState<T>>> _executions =
+      <String, StreamSubscription<BodyState<T>>>{};
 
   BodyProvider({
     this.state,
@@ -58,7 +61,80 @@ class BodyProvider<T> extends BodyProviderBase<T> {
   @override
   bool hasMore([String? query]) => state?.hasMore(query) == true;
 
+  String _queryKey(String? query) => query ?? '';
+
+  void _disposeQueryIfUnused(String? query) {
+    final String key = _queryKey(query);
+    final BehaviorSubject<BodyState<T>>? subject = _subjects[key];
+    if (subject == null || subject.hasListener) {
+      return;
+    }
+    _executions.remove(key)?.cancel();
+    subject.close();
+    _subjects.remove(key);
+  }
+
+  BehaviorSubject<BodyState<T>> _subjectForQuery(String? query) {
+    final String key = _queryKey(query);
+    return _subjects.putIfAbsent(
+      key,
+      () => BehaviorSubject<BodyState<T>>.seeded(initialState(query)),
+    );
+  }
+
   @override
+  Stream<BodyState<T>> listen(String? query) {
+    return _subjectForQuery(query).stream.doOnCancel(() {
+      _disposeQueryIfUnused(query);
+    });
+  }
+
+  @override
+  void execute({
+    String? query,
+    bool allowState = true,
+    bool allowCache = true,
+    bool allowData = true,
+    bool clearData = false,
+  }) {
+    final String key = _queryKey(query);
+    final BehaviorSubject<BodyState<T>> subject = _subjectForQuery(query);
+
+    if (clearData) {
+      if (state != null) {
+        if (!allowState) {
+          state!.clear();
+        }
+        subject.add(subject.value.copy(isLoading: true, clearData: true));
+      }
+    }
+    _executions[key]?.cancel();
+    late final StreamSubscription<BodyState<T>> execution;
+    execution = resolve(
+      query: query,
+      allowState: allowState,
+      allowCache: allowCache,
+      allowData: allowData,
+    ).listen(
+      (event) {
+        if (!subject.isClosed) {
+          subject.add(event);
+        }
+      },
+      onError: (Object e, StackTrace s) {
+        if (!subject.isClosed) {
+          subject.add(BodyState.error(e, s));
+        }
+      },
+      onDone: () {
+        if (identical(_executions[key], execution)) {
+          _executions.remove(key);
+        }
+      },
+    );
+    _executions[key] = execution;
+  }
+
   BodyState<T> initialState(String? query) {
     if (state?.hasData(query) == true) {
       return BodyState.data(state!.data(query));
@@ -66,7 +142,6 @@ class BodyProvider<T> extends BodyProviderBase<T> {
     return BodyState.loading();
   }
 
-  @override
   Stream<BodyState<T>> resolve({
     String? query,
     bool allowState = true,
@@ -105,7 +180,7 @@ class BodyProvider<T> extends BodyProviderBase<T> {
     }
 
     controller.onListen = () {
-      state!.addListener(addStateSnapshot);
+      state?.addListener(addStateSnapshot);
       loadSubscription = _loadState(
         params: params,
         allowState: allowState,
@@ -122,12 +197,13 @@ class BodyProvider<T> extends BodyProviderBase<T> {
       );
     };
 
-    controller.onCancel = () async {
+    controller.onCancel = () {
       state?.removeListener(addStateSnapshot);
-      await loadSubscription?.cancel();
+      loadSubscription?.cancel();
       loadSubscription = null;
+      _disposeQueryIfUnused(query);
       if (!controller.isClosed) {
-        await controller.close();
+        controller.close();
       }
     };
 
@@ -253,92 +329,6 @@ class CachedBodyProvider<T> extends BodyProvider<T> {
       }
       return state;
     });
-  }
-}
-
-extension ProviderExt on Iterable<BodyProviderBase> {
-  BodyState initialState(
-    String? query, {
-    required MergeDataStrategy mergeStrategy,
-  }) {
-    return _merge(
-      map((state) => state.initialState(query).copy(providerName: state.name)),
-      mergeStrategy,
-    ).copy(combinedStates: true);
-  }
-
-  Stream<BodyState> resolve({
-    String? query,
-    bool allowState = true,
-    bool allowCache = true,
-    bool allowData = true,
-    MergeDataStrategy mergeStrategy = MergeDataStrategy.allAtOne,
-  }) {
-    return Rx.combineLatest(
-      map(
-        (provider) => provider
-            .resolve(
-              query: query,
-              allowState: allowState,
-              allowCache: allowCache,
-              allowData: allowData,
-            )
-            .map((BodyState event) => event.copy(providerName: provider.name)),
-      ),
-      (Iterable<BodyState> states) => _merge(states, mergeStrategy),
-    ).map((event) {
-      BodyState bState = event.copy(combinedStates: true);
-      if (kDebugMode && BodyBuilderConfig.instance.debugLogsEnabled) {
-        log('--- ProviderExt -> resolved -> Start ---');
-        log('Merged state: $bState');
-        log('--- ProviderExt -> resolved -> End ---');
-      }
-      return bState;
-    });
-  }
-
-  BodyState _merge(
-    Iterable<BodyState> states,
-    MergeDataStrategy strategy,
-  ) {
-    if (kDebugMode && BodyBuilderConfig.instance.debugLogsEnabled) {
-      _debugPrintStates(states);
-    }
-    bool oneIsLoading = states.any((state) => state.isLoading);
-    bool oneIsCache = states.any((state) => state.isCache);
-    bool allHaveData = states.every((state) => state.hasData);
-    if (allHaveData) {
-      if (oneIsCache) {
-        return BodyState.cache(states, isLoading: oneIsLoading);
-      }
-      return BodyState.data(states, isLoading: oneIsLoading);
-    }
-
-    BodyState? errorState =
-        states.firstWhereOrNull((state) => state.error != null);
-    if (errorState != null) {
-      return BodyState.error(errorState.error!, errorState.errorStack)
-          .copy(data: states, isLoading: oneIsLoading);
-    }
-    switch (strategy) {
-      case MergeDataStrategy.allAtOne:
-        return BodyState.loading().copy(
-          data: states
-              .map((state) => state.copy(clearData: true, isLoading: true))
-              .toList(),
-        );
-      case MergeDataStrategy.oneByOne:
-        return BodyState.loading().copy(data: states);
-    }
-  }
-
-  void _debugPrintStates(Iterable<BodyState<dynamic>> states) {
-    log('--- BodyBuilder -> OnEvent Start ---');
-    log('Providers: ${map((e) => e.name ?? '${e.runtimeType}')}');
-    for (var state in states) {
-      log('State: $state');
-    }
-    log('--- BodyBuilder -> OnEvent End ---');
   }
 }
 

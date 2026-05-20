@@ -20,7 +20,6 @@ final myAutoDisposeSimpleProvider =
 
 final myAutoDisposeBProvider = Provider<BodyProviderBase<String>>(
   (Ref ref) {
-    print('Creating myAutoDisposeBProvider');
     return ref.asBodyProvider(
       myAutoDisposeSimpleProvider,
       builder: ([params]) =>
@@ -57,9 +56,6 @@ final myPaginatedBProvider = Provider<BodyProviderBase<Iterable<String>>>(
 final myRelatedPaginatedProvider =
     createFamilyPaginatedStateProvider<int, String>();
 
-// 1 - Gérer lorsque un builder se termine apres que le state change (family)
-// 2 - ne pas éxécuter le builder 2 fois en meme temps
-// 3 - Améliorer le pull to refresh
 final myRelatedPaginatedBProvider =
     Provider.family<BodyProviderBase<Iterable<String>>, int>(
   (Ref ref, int id) {
@@ -106,9 +102,6 @@ class DummyRepository {
     DataBuilderParams? params,
   ) async {
     int previousPage = params!.lastPage!.page;
-    print(
-      'Get remote data for page ${previousPage + 1} and query <${params.query}> (previous page: $previousPage)',
-    );
     return await _dummyResponse(previousPage, null, params.query);
   }
 
@@ -117,9 +110,6 @@ class DummyRepository {
     DataBuilderParams? params,
   ) async {
     int previousPage = params!.lastPage!.page;
-    print(
-      'Get remote data for page ${previousPage + 1} and query <${params.query}> (previous page: $previousPage)',
-    );
     return await _dummyResponse(previousPage, id, params.query);
   }
 

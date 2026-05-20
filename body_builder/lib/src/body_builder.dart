@@ -6,9 +6,11 @@ import 'dart:developer';
 import 'package:body_builder/src/basic_ui.dart';
 import 'package:body_builder/src/body_provider.dart';
 import 'package:body_builder/src/body_state.dart';
+import 'package:body_builder/src/provider_ext.dart';
 import 'package:body_builder/src/typedefs_child_body_builder.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:rxdart/rxdart.dart';
 
 class BodyBuilderConfig {
   static BodyBuilderConfig? _instance;
@@ -84,9 +86,9 @@ class BodyBuilder<T> extends StatefulWidget {
 }
 
 class BodyBuilderState<T> extends State<BodyBuilder<T>> {
-  StreamSubscription? _subscription;
+  StreamSubscription<BodyState>? _providersSubscription;
   StreamSubscription? _delaySubscription;
-  bool _clearDataUntilLoadingStop = false;
+  String? _listenedQuery;
 
   late BodyState _state;
 
@@ -106,9 +108,22 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
 
   @override
   void initState() {
-    widget.searchController?.addListener(delayedFetch);
-    reload(allowState: true, allowCache: true, ignoreLoading: true);
     super.initState();
+    _setInitialeState();
+    widget.searchController?.addListener(delayedFetch);
+    _listenProviders(query: widget.searchController?.text ?? '');
+    reload(allowState: true, allowCache: true, ignoreLoading: true);
+  }
+
+  void _setInitialeState() {
+    _state = widget.providers
+        .merge(
+          widget.providers.map(
+            (provider) => BodyState.loading().copy(providerName: provider.name),
+          ),
+          widget.mergeDataStrategy,
+        )
+        .copy(combinedStates: true);
   }
 
   @override
@@ -119,41 +134,44 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
       widget.providers.map((e) => e.id).toList(),
     );
     if (providersChanged) {
+      _listenProviders(query: widget.searchController?.text ?? '', force: true);
       reload(allowState: true, allowCache: true, ignoreLoading: true);
-    } else if (oldWidget.searchController != widget.searchController) {
+    }
+    if (oldWidget.searchController != widget.searchController) {
       oldWidget.searchController?.removeListener(delayedFetch);
       widget.searchController?.addListener(delayedFetch);
+      _listenProviders(query: widget.searchController?.text ?? '', force: true);
     } else if (oldWidget.scrollController != widget.scrollController) {
       // No need to listen to scrollController changes, as we read it directly when needed (in loadMoreIfNeeded)
     }
   }
 
-  bool _initialState() {
-    if (!mounted) {
-      return true;
+  void _listenProviders({
+    required String? query,
+    bool force = false,
+  }) {
+    if (!force && _providersSubscription != null && _listenedQuery == query) {
+      return;
     }
-    try {
-      BodyState? state = widget.providers.initialState(
-        widget.searchController?.text ?? '',
-        mergeStrategy: widget.mergeDataStrategy,
-      );
+    _providersSubscription?.cancel();
+    _listenedQuery = query;
 
+    _providersSubscription = Rx.combineLatest(
+      widget.providers.map(
+        (provider) => provider
+            .listen(query)
+            .map((event) => event.copy(providerName: provider.name)),
+      ),
+      (states) => widget.providers.merge(states, widget.mergeDataStrategy),
+    ).map((event) {
+      BodyState bState = event.copy(combinedStates: true);
       if (kDebugMode && BodyBuilderConfig.instance.debugLogsEnabled) {
-        log('--- _initialState -> resolved -> Start ---');
-        log('Merged state: $state');
-        log('--- _initialState -> resolved -> End ---');
+        log('--- ProviderExt -> resolved -> Start ---');
+        log('Merged state: $bState');
+        log('--- ProviderExt -> resolved -> End ---');
       }
-      setState(() {
-        _state = state;
-      });
-      print(
-          'Initial state has data: ${state.hasData}, is cache: ${state.isCache}, has error: ${state.hasError} => ${state.hasData && !state.isCache && !state.hasError}');
-      return state.hasData && !state.isCache && !state.hasError;
-    } catch (e, s) {
-      debugPrint('Failed to get initial state: $e\n$s');
-      _state = BodyState.error(e, s);
-      return true;
-    }
+      return bState;
+    }).listen(_onState, onError: _onError);
   }
 
   @override
@@ -279,31 +297,15 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
     if (!ignoreLoading && _state.isLoading) {
       return;
     }
-    if (clearData) {
-      setState(() {
-        _clearDataUntilLoadingStop = true;
-        _state = _state.copy(isLoading: true, clearData: true);
-      });
-    }
-    if (allowState && _initialState()) {
-      // nothing to do, initial state has data
-      return;
-    }
-    _subscription?.cancel();
-    try {
-      _subscription = widget.providers
-          .resolve(
-            query: widget.searchController?.text ?? '',
-            allowState: allowState,
-            allowCache: allowCache,
-            allowData: allowData,
-            mergeStrategy: widget.mergeDataStrategy,
-          )
-          .listen(_onState, onError: _onError);
-      await _subscription?.asFuture();
-    } catch (e, s) {
-      _onError(e, s);
-    }
+    final String query = widget.searchController?.text ?? '';
+    _listenProviders(query: query);
+    widget.providers.execute(
+      query: query,
+      allowState: allowState,
+      allowCache: allowCache,
+      allowData: allowData,
+      clearData: clearData,
+    );
   }
 
   void _onError(Object e, StackTrace s) {
@@ -322,12 +324,7 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
 
   void _onState(BodyState state) {
     setState(() {
-      _state = state.copy(
-        clearData: _clearDataUntilLoadingStop && state.isLoading,
-      );
-      if (_clearDataUntilLoadingStop && !_state.isLoading) {
-        _clearDataUntilLoadingStop = false;
-      }
+      _state = state;
     });
   }
 
@@ -370,7 +367,8 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
   @override
   void dispose() {
     widget.searchController?.removeListener(delayedFetch);
-    _subscription?.cancel();
+    _delaySubscription?.cancel();
+    _providersSubscription?.cancel();
     super.dispose();
   }
 }

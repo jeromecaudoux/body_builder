@@ -34,7 +34,7 @@ final class BodyState<T> {
     if (clearData) {
       if (this.combinedStates == true) {
         newData = (this.data as Iterable<BodyState>?)
-            ?.map((state) => state.copy(clearData: true))
+            ?.map((state) => state.copy(clearData: true, isLoading: true))
             .toList() as H?;
       } else {
         newData = null;

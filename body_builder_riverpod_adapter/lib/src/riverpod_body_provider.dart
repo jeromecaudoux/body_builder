@@ -5,18 +5,17 @@ import 'package:body_builder_riverpod_adapter/src/adapter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart' as rp;
+import 'package:rxdart/rxdart.dart';
 
 extension BodyProviderRefExt on Ref {
   BodyProviderBase<T> asBodyProvider<T>(
     rp.StateNotifierProvider? state, {
-    CacheProvider<T>? cache,
     required DataProvider<T> builder,
     String? name,
   }) {
     return RiverpodBodyProvider<T>(
       ref: this,
       state: state,
-      cache: cache,
       builder: builder,
       name: name,
     );
@@ -28,6 +27,10 @@ class RiverpodBodyProvider<T> extends BodyProviderBase<T> {
   final rp.StateNotifierProvider? state;
   final CacheProvider<T>? cache;
   final DataProvider<T> builder;
+  final Map<String, BehaviorSubject<BodyState<T>>> _subjects =
+      <String, BehaviorSubject<BodyState<T>>>{};
+  final Map<String, StreamSubscription<BodyState<T>>> _executions =
+      <String, StreamSubscription<BodyState<T>>>{};
 
   RiverpodBodyProvider({
     required this.ref,
@@ -62,14 +65,88 @@ class RiverpodBodyProvider<T> extends BodyProviderBase<T> {
     if (value == null) return null;
     if (value is SimpleDataNotifier) return value.data as T?;
     if (value is PaginatedDataNotifier) {
-      return value.get(query).items as T?;
+      Iterable items = value.get(query).items;
+      return items.isNotEmpty ? items as T? : null;
     }
     throw ArgumentError(
       'Invalid state type: expected $T? or PaginatedDataNotifier<$T>, got ${value.runtimeType}',
     );
   }
 
+  String _queryKey(String? query) => query ?? '';
+
+  void _disposeQueryIfUnused(String? query) {
+    final String key = _queryKey(query);
+    final BehaviorSubject<BodyState<T>>? subject = _subjects[key];
+    if (subject == null || subject.hasListener) {
+      return;
+    }
+    _executions.remove(key)?.cancel();
+    subject.close();
+    _subjects.remove(key);
+  }
+
+  BehaviorSubject<BodyState<T>> _subjectForQuery(String? query) {
+    final String key = _queryKey(query);
+    return _subjects.putIfAbsent(
+      key,
+      () => BehaviorSubject<BodyState<T>>.seeded(initialState(query)),
+    );
+  }
+
   @override
+  Stream<BodyState<T>> listen(String? query) {
+    return _subjectForQuery(query).stream.doOnCancel(() {
+      _disposeQueryIfUnused(query);
+    });
+  }
+
+  @override
+  void execute({
+    String? query,
+    bool allowState = true,
+    bool allowCache = true,
+    bool allowData = true,
+    bool clearData = false,
+  }) {
+    final String key = _queryKey(query);
+    final BehaviorSubject<BodyState<T>> subject = _subjectForQuery(query);
+
+    if (clearData) {
+      if (_state != null && !allowState) {
+        ref.invalidate(_state!);
+        return;
+      } else {
+        subject.add(subject.value.copy(isLoading: true, clearData: true));
+      }
+    }
+    _executions[key]?.cancel();
+    late final StreamSubscription<BodyState<T>> execution;
+    execution = resolve(
+      query: query,
+      allowState: allowState,
+      allowCache: allowCache,
+      allowData: allowData,
+    ).listen(
+      (BodyState<T> event) {
+        if (!subject.isClosed) {
+          subject.add(event);
+        }
+      },
+      onError: (Object e, StackTrace s) {
+        if (!subject.isClosed) {
+          subject.add(BodyState.error(e, s));
+        }
+      },
+      onDone: () {
+        if (identical(_executions[key], execution)) {
+          _executions.remove(key);
+        }
+      },
+    );
+    _executions[key] = execution;
+  }
+
   BodyState<T> initialState(String? query) {
     if (state != null) {
       final T? data = _resolve(_state, query);
@@ -80,18 +157,14 @@ class RiverpodBodyProvider<T> extends BodyProviderBase<T> {
     return BodyState.loading();
   }
 
-  @override
   Stream<BodyState<T>> resolve({
     String? query,
     bool allowState = true,
-    bool allowCache = true,
+    bool allowCache = false,
     bool allowData = true,
   }) {
-    print(
-        '-> Resolving data for provider: ${_state.runtimeType}, query: <$query>');
     // Disable state or cache providers if they are not set
     allowState = allowState && state != null;
-    allowCache = allowCache && cache != null;
 
     final controller = StreamController<BodyState<T>>();
     ProviderSubscription<Object?>? stateSubscription;
@@ -112,13 +185,11 @@ class RiverpodBodyProvider<T> extends BodyProviderBase<T> {
         lastPage: _lastPageIfPaginated(query),
       );
       final data = await builder(params);
-      print('Data fetched for provider: ${_state.runtimeType}. data=$data');
       _updateStateWithData(controller, data, params);
     }
 
     controller.onListen = () {
       if (state != null) {
-        print('Listening to state changes for provider: ${_state.runtimeType}');
         stateSubscription = ref.listen<Object?>(_state!, (previous, next) {
           if (!controller.isClosed) {
             final T? data = _resolve(_state, query);
@@ -136,18 +207,24 @@ class RiverpodBodyProvider<T> extends BodyProviderBase<T> {
     };
 
     controller.onCancel = () {
-      print('Cancelling subscription for provider: ${_state.runtimeType}');
       stateSubscription?.close();
       stateSubscription = null;
+      _disposeQueryIfUnused(query);
+
       if (!controller.isClosed) {
         controller.close();
       }
     };
 
     ref.onDispose(() {
-      print('Disposing provider: ${_state.runtimeType}');
       stateSubscription?.close();
       stateSubscription = null;
+      for (final sub in _executions.values) {
+        sub.cancel();
+      }
+      for (final subject in _subjects.values) {
+        subject.close();
+      }
       if (!controller.isClosed) {
         controller.close();
       }
@@ -199,17 +276,13 @@ class RiverpodBodyProvider<T> extends BodyProviderBase<T> {
         controller.add(BodyState.data(data));
       } else {
         final notifier = ref.read(_state!.notifier);
-        print('Current state for provider: $notifier');
         if (notifier is SimpleDataNotifier<T>) {
           assert(
               data is T, 'Expected data of type $T, got ${data.runtimeType}');
-          print('Updating state with data: $data');
           notifier.on(data as T);
         } else if (notifier is PaginatedDataNotifier) {
-          print('Updating paginated state with data: $data');
           assert(data is PaginatedBase,
               'Expected data of type PaginatedBase<$T>, got ${data.runtimeType}');
-          print('Updating paginated state with data: $data');
           notifier.on(data as PaginatedBase, query: params.query);
         } else {
           throw ArgumentError(
