@@ -1,6 +1,12 @@
 ## 1.1.4
 
-* riverpod > Add missing state notify to each states data change
+* **Breaking Changes !**
+* riverpod > Better support for riverpod. Impl `ref.asBodyProvider`.
+* riverpod > New riverpod states to make things easier: `createSimpleStateProvider, createFamilySimpleStateProvider, createPaginatedStateProvider, createPaginatedDataStateProvider, createFamilyPaginatedStateProvider, createAutoDisposeSimpleStateProvider, createAutoDisposeFamilySimpleStateProvider, createAutoDisposePaginatedStateProvider, createAutoDisposeFamilyPaginatedStateProvider`.
+* riverpod > The state is updated within the body provider. No need to update it on your side anymore.
+* BodyProvider > Concurrent loading are now handled correctly to avoid calling multiple times the data loader at the same time. Works only if you reuse the same instance of a body provider.
+* ChildWrapper > Search and scroll controller are now passed as parameter if you wish to add your own pull to refresh or more.
+* Pull To Refresh > Removed, use child wrapper instead.
 
 ## 1.1.3
 
