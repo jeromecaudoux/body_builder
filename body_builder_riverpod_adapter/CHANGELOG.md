@@ -1,4 +1,4 @@
-## 1.1.4
+## 2.0.0
 
 * **Breaking Changes !**
 * riverpod > Better support for riverpod. Impl `ref.asBodyProvider`.
