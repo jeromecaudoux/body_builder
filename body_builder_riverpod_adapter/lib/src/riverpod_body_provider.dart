@@ -108,13 +108,12 @@ class RiverpodBodyProvider<T> extends BodyProviderBase<T> {
     bool allowCache = true,
     bool allowData = true,
     bool clearData = false,
+    bool force = false,
   }) {
     final String key = _queryKey(query);
     final BehaviorSubject<BodyState<T>> subject = _subjectForQuery(query);
     bool isExecuting = _executions.containsKey(key);
-    if (isExecuting && !clearData) {
-      // atm clearData is true through a user action only.
-      // Maybe this must be improved later
+    if (isExecuting && !force) {
       return;
     }
     if (clearData) {

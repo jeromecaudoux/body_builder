@@ -14,6 +14,7 @@ class PaginatedPage extends StatefulWidget {
 
 class _PaginatedPageState extends State<PaginatedPage> {
   final GlobalKey<BodyBuilderState> _key = GlobalKey();
+  final ScrollController _scrollController = ScrollController();
   late final PaginatedSampleState _state;
 
   @override
@@ -39,6 +40,7 @@ class _PaginatedPageState extends State<PaginatedPage> {
       ),
       body: BodyBuilder(
         key: _key,
+        scrollController: _scrollController,
         providers: [BodyProvider(state: _state, data: _dataProvider)],
         builder: _buildListView,
       ),
@@ -47,6 +49,7 @@ class _PaginatedPageState extends State<PaginatedPage> {
 
   Widget _buildListView(Iterable<String> items) {
     return ListView.builder(
+      controller: _scrollController,
       itemCount: items.length + 1,
       itemBuilder: (context, index) {
         if (index == items.length) {
@@ -102,5 +105,11 @@ class _PaginatedPageState extends State<PaginatedPage> {
         lastPage: 5,
       );
     }).then((response) => _state.on(response, query: params?.query));
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 }

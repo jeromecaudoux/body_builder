@@ -141,8 +141,6 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
       oldWidget.searchController?.removeListener(delayedFetch);
       widget.searchController?.addListener(delayedFetch);
       _listenProviders(query: widget.searchController?.text ?? '', force: true);
-    } else if (oldWidget.scrollController != widget.scrollController) {
-      // No need to listen to scrollController changes, as we read it directly when needed (in loadMoreIfNeeded)
     }
   }
 
@@ -176,13 +174,17 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
 
   @override
   Widget build(BuildContext context) {
-    Widget child = _buildMainContent();
-    if (widget.scrollController == null) {
-      return _wrapForAnimations(child);
-    }
+    Widget child = _wrapForAnimations(_buildMainContent());
     ChildWrapper? childWrapper =
         widget.childWrapper ?? BodyBuilderConfig._instance?.childWrapper;
-    return childWrapper?.call(child, _state, retry) ?? child;
+    return childWrapper?.call(
+          child,
+          _state,
+          retry,
+          searchController: widget.searchController,
+          scrollController: widget.scrollController,
+        ) ??
+        child;
   }
 
   Widget _wrapForAnimations(Widget child) {
@@ -292,6 +294,7 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
     bool allowCache = false,
     bool allowData = true,
     bool clearData = false,
+    bool force = false,
     bool ignoreLoading = false,
   }) async {
     if (!ignoreLoading && _state.isLoading) {
@@ -305,6 +308,7 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
       allowCache: allowCache,
       allowData: allowData,
       clearData: clearData,
+      force: force || clearData,
     );
   }
 
@@ -349,7 +353,7 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
 
   Future<void> loadMoreIfNeeded() {
     if (hasMore()) {
-      return reload();
+      return reload(force: true);
     }
     return Future.value();
   }

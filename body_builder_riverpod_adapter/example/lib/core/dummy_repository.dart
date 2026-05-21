@@ -1,5 +1,6 @@
 import 'package:body_builder/body_builder.dart';
 import 'package:body_builder_riverpod_adapter/body_builder_riverpod_adapter.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// State and BodyProvider for the simple state example
@@ -94,6 +95,7 @@ class DummyRepository {
   Future<String> _myFakeApiCall([int? id]) async {
     await Future.delayed(const Duration(seconds: 1));
     DateTime now = DateTime.now();
+    debugPrint('--> Doing fake API call.');
     return '${id == null ? '' : '[$id]'} '
         'Fetch date: ${now.hour}h ${now.minute}m ${now.second}s';
   }

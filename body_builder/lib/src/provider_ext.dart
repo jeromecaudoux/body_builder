@@ -13,6 +13,7 @@ extension ProviderExt on Iterable<BodyProviderBase> {
     bool allowCache = true,
     bool allowData = true,
     bool clearData = false,
+    bool force = false,
     MergeDataStrategy mergeStrategy = MergeDataStrategy.allAtOne,
   }) {
     for (final provider in this) {
@@ -22,6 +23,7 @@ extension ProviderExt on Iterable<BodyProviderBase> {
         allowCache: allowCache,
         allowData: allowData,
         clearData: clearData,
+        force: force,
       );
     }
   }

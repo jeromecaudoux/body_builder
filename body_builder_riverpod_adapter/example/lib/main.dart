@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
-  BodyBuilder.setDefaultConfig(debugLogsEnabled: true);
+  BodyBuilder.setDefaultConfig(debugLogsEnabled: false);
   runApp(const MyApp());
 }
 

@@ -9,8 +9,30 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 void main() {
-  BodyBuilder.setDefaultConfig(debugLogsEnabled: true);
+  BodyBuilder.setDefaultConfig(
+    debugLogsEnabled: false,
+    childWrapper: _childWrapper,
+  );
   runApp(const MyApp());
+}
+
+Widget _childWrapper(
+  Widget child,
+  BodyState state,
+  VoidCallback onRetry, {
+  TextEditingController? searchController,
+  ScrollController? scrollController,
+}) {
+  if (scrollController == null) {
+    return child;
+  }
+  // There is a scroll controller in PaginatedPage
+  return Column(
+    children: [
+      if (state.isLoading) const LinearProgressIndicator(),
+      Expanded(child: child),
+    ],
+  );
 }
 
 class MyApp extends StatelessWidget {
