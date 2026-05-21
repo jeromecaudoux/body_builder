@@ -1,6 +1,4 @@
 
-// 1 - Gérer lorsque un builder se termine apres que le state change (family)
-// 2 - ne pas éxécuter le builder 2 fois en meme temps
 // 3 - Améliorer le pull to refresh
 
 **body_builder_riverpod_adapter** is an extension of the **body_builder** package that provides a way to use **riverpod**'s states with the **BodyProvider**.

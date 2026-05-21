@@ -78,6 +78,10 @@ class _AutoDisposeSimplePageState extends ConsumerState<AutoDisposeSimplePage> {
           providers: [ref.watch(myAutoDisposeBProvider)],
           builder: (String data) => Center(child: Text(data)),
         ),
+        BodyBuilder(
+          providers: [ref.watch(myAutoDisposeBProvider)],
+          builder: (String data) => Center(child: Text(data)),
+        ),
       ],
     );
   }

@@ -14,6 +14,12 @@ class _BasicBodyBuilderPageState extends State<BasicBodyBuilderPage> {
   final GlobalKey<BodyBuilderState> _key = GlobalKey();
   late final BasicSampleState _state;
 
+  late final BodyProvider<String> _provider = BodyProvider(
+    state: _state,
+    cache: _cacheProvider,
+    data: _dataProvider,
+  );
+
   @override
   void initState() {
     _state = context.read<BasicSampleState>();
@@ -40,19 +46,23 @@ class _BasicBodyBuilderPageState extends State<BasicBodyBuilderPage> {
           ),
         ],
       ),
-      body: BodyBuilder(
-        key: _key,
-        providers: [
-          BodyProvider(
-            state: _state,
-            cache: _cacheProvider,
-            data: _dataProvider,
+      body: Column(
+        children: [
+          BodyBuilder(
+            key: _key,
+            providers: [_provider],
+            builder: _buildBody,
           ),
+          BodyBuilder(
+            providers: [_provider],
+            builder: _buildBody,
+          )
         ],
-        builder: (String data) => Center(child: Text(data)),
       ),
     );
   }
+
+  Widget _buildBody(String data) => Center(child: Text(data));
 
   Future<String?> _cacheProvider([DataBuilderParams? params]) {
     return Future.delayed(
@@ -61,10 +71,9 @@ class _BasicBodyBuilderPageState extends State<BasicBodyBuilderPage> {
     );
   }
 
-  Future<String> _dataProvider([DataBuilderParams? params]) {
-    return Future.delayed(
-      const Duration(seconds: 2),
-      () => 'Value from your API',
-    ).then(_state.on);
+  Future<String> _dataProvider([DataBuilderParams? params]) async {
+    await Future.delayed(const Duration(seconds: 2));
+    debugPrint('--> Doing fake API call');
+    return _state.on('Value from your API');
   }
 }
