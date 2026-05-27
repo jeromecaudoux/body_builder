@@ -74,7 +74,7 @@ final dummyRepProvider = Provider<DummyRepository>(
 );
 
 class DummyRepository {
-  static const int _itemsPerPage = 10;
+  static const int _itemsPerPage = 2;
 
   DummyRepository();
 
@@ -120,10 +120,16 @@ class DummyRepository {
     int? id,
     String? query,
   ]) async {
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(seconds: 1));
 
+    // return PaginatedResponse<String>(
+    //   items: [
+    //   ],
+    //   page: previousPage + 1,
+    //   lastPage: 5000,
+    // );
     /// Uncomment this to test the error handling mechanism
-    // if (lastPage == 2) {
+    // if (previousPage == 2) {
     //   throw Exception(
     //     'When the code decides to cha-cha, we\'ve got a bug with dance moves!',
     //   );

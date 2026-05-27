@@ -1,3 +1,7 @@
+## 2.0.2
+
+* Pagination > Fix an issue when PaginatedBase is empty on the first page.
+
 ## 2.0.1
 
 * RiverpodBodyProvider > Add missing try catch fwhile executing the builder.

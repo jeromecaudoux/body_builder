@@ -66,7 +66,7 @@ class RiverpodBodyProvider<T> extends BodyProviderBase<T> {
     if (value is SimpleDataNotifier) return value.data as T?;
     if (value is PaginatedDataNotifier) {
       Iterable items = value.get(query).items;
-      return items.isNotEmpty ? items as T? : null;
+      return items as T?;
     }
     throw ArgumentError(
       'Invalid state type: expected $T? or PaginatedDataNotifier<$T>, got ${value.runtimeType}',
@@ -175,7 +175,10 @@ class RiverpodBodyProvider<T> extends BodyProviderBase<T> {
 
     Future<void> emitData() async {
       if (controller.isClosed) return;
-
+      if (isPaginated && !hasMore(query)) {
+        allowData = false;
+        allowState = true;
+      }
       BodyState<T> bState = initialState(query).copy(isLoading: allowData);
       controller.add(bState);
       if (allowState) {
