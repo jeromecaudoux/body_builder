@@ -1,3 +1,8 @@
+## 2.0.1
+
+* RiverpodBodyProvider > Add missing try catch fwhile executing the builder.
+* BodyBuilder > Add new OnStateChanged parameter.
+
 ## 2.0.0
 
 * **Breaking Changes !**

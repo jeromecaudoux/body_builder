@@ -52,6 +52,7 @@ class _BasicBodyBuilderPageState extends State<BasicBodyBuilderPage> {
             key: _key,
             providers: [_provider],
             builder: _buildBody,
+            onStateChanged: _onStateChanged,
           ),
           BodyBuilder(
             providers: [_provider],
@@ -60,6 +61,10 @@ class _BasicBodyBuilderPageState extends State<BasicBodyBuilderPage> {
         ],
       ),
     );
+  }
+
+  void _onStateChanged(BodyState? previous, BodyState next) {
+    debugPrint('_onStateChanged called with: $previous -> $next');
   }
 
   Widget _buildBody(String data) => Center(child: Text(data));

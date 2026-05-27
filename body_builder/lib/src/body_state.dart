@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 final class BodyState<T> {
   // UI state values
   final bool isCache;
@@ -97,21 +99,27 @@ final class BodyState<T> {
         'data: $data}';
   }
 
+  static const DeepCollectionEquality _dataEquality = DeepCollectionEquality();
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is BodyState &&
           runtimeType == other.runtimeType &&
+          combinedStates == other.combinedStates &&
+          providerName == other.providerName &&
           isCache == other.isCache &&
-          data == other.data &&
+          _dataEquality.equals(data, other.data) &&
           isLoading == other.isLoading &&
           error == other.error &&
           errorStack == other.errorStack;
 
   @override
   int get hashCode =>
+      combinedStates.hashCode ^
+      providerName.hashCode ^
       isCache.hashCode ^
-      data.hashCode ^
+      _dataEquality.hash(data) ^
       isLoading.hashCode ^
       error.hashCode ^
       errorStack.hashCode;

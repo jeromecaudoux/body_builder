@@ -31,6 +31,8 @@ class BodyBuilderConfig {
   });
 }
 
+typedef OnStateChanged = void Function(BodyState? previous, BodyState next);
+
 class BodyBuilder<T> extends StatefulWidget {
   final Function? builder;
   final CustomBuilder? customBuilder;
@@ -43,6 +45,7 @@ class BodyBuilder<T> extends StatefulWidget {
   final ScrollController? scrollController;
   final Duration searchFetchDelay;
   final MergeDataStrategy mergeDataStrategy;
+  final OnStateChanged? onStateChanged;
 
   const BodyBuilder({
     this.animationDuration = const Duration(milliseconds: 150),
@@ -54,6 +57,7 @@ class BodyBuilder<T> extends StatefulWidget {
     this.customBuilder,
     this.childWrapper,
     this.builder,
+    this.onStateChanged,
     this.mergeDataStrategy = MergeDataStrategy.allAtOne,
     this.searchFetchDelay = const Duration(milliseconds: 400),
     super.key,
@@ -124,6 +128,7 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
           widget.mergeDataStrategy,
         )
         .copy(combinedStates: true);
+    widget.onStateChanged?.call(null, _state);
   }
 
   @override
@@ -316,17 +321,20 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
     // Big error, probably inside the body builder logic
     // Just print it and send an error to the UI
     debugPrint('Failed to resolve provider(s): $e\n$s');
-    setState(() {
-      _state = _state.copy(
-        error: e,
-        errorStack: s,
-        clearData: true,
-        isLoading: false,
-      );
-    });
+    BodyState state = _state.copy(
+      error: e,
+      errorStack: s,
+      clearData: true,
+      isLoading: false,
+    );
+    _onState(state);
   }
 
   void _onState(BodyState state) {
+    if (_state == state) {
+      return;
+    }
+    widget.onStateChanged?.call(_state, state);
     setState(() {
       _state = state;
     });

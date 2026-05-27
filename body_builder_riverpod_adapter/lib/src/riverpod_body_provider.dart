@@ -188,8 +188,14 @@ class RiverpodBodyProvider<T> extends BodyProviderBase<T> {
         query: query,
         lastPage: _lastPageIfPaginated(query),
       );
-      final data = await builder(params);
-      _updateStateWithData(controller, data, params);
+      try {
+        final data = await builder(params);
+        _updateStateWithData(controller, data, params);
+      } catch (e, s) {
+        if (!controller.isClosed) {
+          controller.add(BodyState.error(e, s));
+        }
+      }
     }
 
     controller.onListen = () {
