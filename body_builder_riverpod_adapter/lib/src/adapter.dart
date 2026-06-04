@@ -10,6 +10,13 @@ class SimpleDataNotifier<T> extends StateNotifier<T?> {
   void on(T data) => state = data;
 
   void clear() => state = null;
+
+  @override
+  bool updateShouldNotify(T? old, T? current) {
+    bool should = super.updateShouldNotify(old, current) ||
+        (old == current && old == null);
+    return should;
+  }
 }
 
 class PaginatedDataNotifier<T>

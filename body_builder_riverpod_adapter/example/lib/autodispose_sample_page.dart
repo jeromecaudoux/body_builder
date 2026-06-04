@@ -23,11 +23,24 @@ class _AutoDisposeSimplePageState extends ConsumerState<AutoDisposeSimplePage> {
           IconButton(
             onPressed: () => showModalBottomSheet(
               context: context,
-              builder: (context) => SizedBox(
-                height: 200,
-                child: BodyBuilder(
-                  providers: [ref.watch(myAutoDisposeBProvider)],
-                  builder: (String data) => Center(child: Text(data)),
+              isScrollControlled: true,
+              builder: (context) => SingleChildScrollView(
+                child: SizedBox(
+                  key: _key,
+                  height: 200,
+                  child: BodyBuilder(
+                    providers: [ref.watch(myAutoDisposeBProvider)],
+                    customBuilder: (BodyState bState) {
+                      if (bState.isLoading) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (bState.hasError) {
+                        return Center(child: Text(bState.error.toString()));
+                      }
+                      final String data =
+                          bState.byType<String>()?.data ?? 'No data';
+                      return Center(child: Text(data));
+                    },
+                  ),
                 ),
               ),
             ),
@@ -74,7 +87,7 @@ class _AutoDisposeSimplePageState extends ConsumerState<AutoDisposeSimplePage> {
           child: const Text('Invalidate state'),
         ),
         BodyBuilder(
-          key: _key,
+          // key: _key,
           providers: [ref.watch(myAutoDisposeBProvider)],
           builder: (String data) => Center(child: Text(data)),
         ),

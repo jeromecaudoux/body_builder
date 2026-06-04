@@ -30,7 +30,8 @@ final myAutoDisposeBProvider = Provider<BodyProviderBase<String>>(
 );
 
 /// State and BodyProvider for the related simple state example
-final myRelatedSimpleProvider = createFamilySimpleStateProvider<int, String>();
+final myRelatedSimpleProvider =
+    createAutoDisposeFamilySimpleStateProvider<int, String>();
 
 final myRelatedSimpleBProvider = Provider.family<BodyProviderBase<String>, int>(
   (Ref ref, int id) {
@@ -96,6 +97,9 @@ class DummyRepository {
     await Future.delayed(const Duration(seconds: 1));
     DateTime now = DateTime.now();
     debugPrint('--> Doing fake API call.');
+    throw Exception(
+      'When the code decides to cha-cha, we\'ve got a bug with dance moves!',
+    );
     return '${id == null ? '' : '[$id]'} '
         'Fetch date: ${now.hour}h ${now.minute}m ${now.second}s';
   }

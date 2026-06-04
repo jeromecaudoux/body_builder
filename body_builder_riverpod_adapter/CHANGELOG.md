@@ -1,3 +1,8 @@
+## 2.0.3
+
+* Riverpod > Fix retry when the state has no data.
+* README > Update README.md
+
 ## 2.0.2
 
 * Pagination > Fix an issue when PaginatedBase is empty on the first page.
