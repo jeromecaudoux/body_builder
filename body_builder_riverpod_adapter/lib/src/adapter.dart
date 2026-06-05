@@ -27,7 +27,7 @@ class PaginatedDataNotifier<T>
 
   Iterable<T> data([String? query]) => get(query).items;
 
-  bool hasData([String? query]) => get(query).items.isNotEmpty;
+  bool hasData([String? query]) => get(query).hasData;
 
   bool hasMore([String? query]) => get(query).hasMore;
 

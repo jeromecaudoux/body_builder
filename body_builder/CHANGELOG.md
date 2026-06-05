@@ -1,3 +1,7 @@
+## 2.0.6
+
+* Pagination > Fix an isssue when the first page is empty.
+
 ## 2.0.5
 
 * Pagination > Fix first loading state with pagniated provider.

@@ -156,10 +156,6 @@ class BodyProvider<T> extends BodyProviderBase<T> {
     // Disable state or cache providers if they are not set
     allowState = allowState && state != null;
     allowCache = allowCache && cache != null;
-    DataBuilderParams params = DataBuilderParams(
-      query: query,
-      lastPage: isPaginated ? (state as PaginatedState).get(query) : null,
-    );
 
     final controller = StreamController<BodyState<T>>();
     StreamSubscription<BodyState<T>>? loadSubscription;
@@ -168,6 +164,12 @@ class BodyProvider<T> extends BodyProviderBase<T> {
       if (controller.isClosed || state == null) {
         return;
       }
+
+      DataBuilderParams params = DataBuilderParams(
+        query: query,
+        lastPage: isPaginated ? (state as PaginatedState).get(query) : null,
+      );
+
       if (state!.hasData(params.query)) {
         controller.add(BodyState.data(state!.data(params.query)));
         return;
@@ -189,6 +191,12 @@ class BodyProvider<T> extends BodyProviderBase<T> {
 
     controller.onListen = () {
       state?.addListener(addStateSnapshot);
+
+      DataBuilderParams params = DataBuilderParams(
+        query: query,
+        lastPage: isPaginated ? (state as PaginatedState).get(query) : null,
+      );
+
       loadSubscription = _loadState(
         params: params,
         allowState: allowState,

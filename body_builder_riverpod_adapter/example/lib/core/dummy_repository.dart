@@ -126,12 +126,15 @@ class DummyRepository {
     int pageToLoad = previousPage + 1;
     await Future.delayed(const Duration(seconds: 1));
 
-    // return PaginatedResponse<String>(
-    //   items: [
-    //   ],
-    //   page: pageToLoad,
-    //   lastPage: 5000,
-    // );
+    // if (pageToLoad == 1) {
+    //   // Debug
+    //   return PaginatedResponse<String>(
+    //     items: [],
+    //     page: pageToLoad,
+    //     lastPage: 10,
+    //   );
+    // }
+
     /// Uncomment this to test the error handling mechanism
     // if (previousPage == 2) {
     //   throw Exception(

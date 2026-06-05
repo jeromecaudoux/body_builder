@@ -56,6 +56,9 @@ class _PaginatedPageState extends ConsumerState<PaginatedPage> {
   }
 
   Widget _buildListView(Iterable<String> items) {
+    if (items.isEmpty) {
+      return const Center(child: Text('No results'));
+    }
     return ListView.builder(
       itemCount: items.length + 1,
       itemBuilder: (context, index) {

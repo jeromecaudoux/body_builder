@@ -32,7 +32,7 @@ class _PaginatedPageState extends State<PaginatedPage> {
           IconButton(
             onPressed: () {
               _state.clear();
-              _key.currentState?.retry(allowState: false);
+              _key.currentState?.retry();
             },
             icon: const Icon(Icons.refresh),
           ),
@@ -48,6 +48,9 @@ class _PaginatedPageState extends State<PaginatedPage> {
   }
 
   Widget _buildListView(Iterable<String> items) {
+    if (items.isEmpty) {
+      return const Center(child: Text('No items'));
+    }
     return ListView.builder(
       controller: _scrollController,
       itemCount: items.length + 1,
@@ -89,8 +92,16 @@ class _PaginatedPageState extends State<PaginatedPage> {
       int pageToLoad = previousPage + 1;
       debugPrint('Fetching previousPage=$previousPage, nextPage=$pageToLoad');
 
+      // if (pageToLoad == 1) {
+      //   return PaginatedResponse<String>(
+      //     items: [],
+      //     page: pageToLoad,
+      //     lastPage: 1,
+      //   );
+      // }
+
       /// Uncomment this to test the error handling mechanism
-      // if (lastPage == 2) {
+      // if (pageToLoad == 2) {
       //   throw Exception(
       //     'When the code decides to cha-cha, we\'ve got a bug with dance moves!',
       //   );

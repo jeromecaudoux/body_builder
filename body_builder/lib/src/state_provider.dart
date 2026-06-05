@@ -216,7 +216,7 @@ class DataState<T> {
   PaginatedBase<T>? _lastResponse;
 
   Iterable<T> get items => _items;
-  bool get hasData => _items.isNotEmpty && _page > -1;
+  bool get hasData => _page > -1;
   bool get hasMore => _lastPage == -1 || _page < _lastPage;
   int get page => _page;
   int get lastPage => _lastPage;
@@ -294,15 +294,14 @@ class DataState<T> {
         );
       }
       // Avoid any loop with the api, force change the last page.
-      // We add max(1, x), because 0 will make #hasMore always return true
-      _page = max(1, response.pPage);
+      _page = response.pPage;
       _lastPage = _page;
       if (response.pItems.isNotEmpty) {
         _items.removeWhere((e) => response.pItems.contains(e));
         _items.addAll(response.pItems);
-        _nbHits = response.nbHits;
-        _lastResponse = response;
       }
+      _nbHits = response.nbHits;
+      _lastResponse = response;
       return _items;
     }
 

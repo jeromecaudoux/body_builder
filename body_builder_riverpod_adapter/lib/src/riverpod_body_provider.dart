@@ -180,6 +180,7 @@ class RiverpodBodyProvider<T> extends BodyProviderBase<T> {
         allowState = true;
       }
       BodyState<T> bState = initialState(query).copy(isLoading: allowData);
+
       controller.add(bState);
       if (allowState) {
         if (!bState.isLoading) {
