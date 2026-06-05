@@ -210,14 +210,14 @@ class DataState<T> {
   DataState();
 
   final List<T> _items = [];
-  int _page = 0;
-  int _lastPage = 0;
+  int _page = -1;
+  int _lastPage = -1;
   int? _nbHits;
   PaginatedBase<T>? _lastResponse;
 
   Iterable<T> get items => _items;
   bool get hasData => _items.isNotEmpty;
-  bool get hasMore => _lastPage == 0 || _page < _lastPage;
+  bool get hasMore => _lastPage == -1 || _page < _lastPage;
   int get page => _page;
   int get lastPage => _lastPage;
   int? get nbHits => _nbHits;

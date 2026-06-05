@@ -1,3 +1,7 @@
+## 2.0.4
+
+* Pagination > Default page before any loading is now -1. This makes the first page to load "0".
+
 ## 2.0.3
 
 * Riverpod > Fix retry when the state has no data.

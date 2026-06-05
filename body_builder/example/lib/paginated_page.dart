@@ -85,9 +85,9 @@ class _PaginatedPageState extends State<PaginatedPage> {
   /// Any other value will result in the [PaginatedResponse] to be ignored.
   Future<Iterable<String>> _dataProvider([DataBuilderParams? params]) {
     return Future.delayed(const Duration(seconds: 2), () {
-      /// The first page must be 1. the default value is 0 so you can always
-      /// pass "lastPage + 1" to [PaginatedResponse].
-      int previousPage = _state.get(params?.query).page;
+      int previousPage = params?.lastPage?.page ?? -1;
+      int pageToLoad = previousPage + 1;
+      debugPrint('Fetching previousPage=$previousPage, nextPage=$pageToLoad');
 
       /// Uncomment this to test the error handling mechanism
       // if (lastPage == 2) {
@@ -99,9 +99,9 @@ class _PaginatedPageState extends State<PaginatedPage> {
         items: [
           /// Generate dummy paginated data
           for (int i = 0; i < _itemsPerPage; i++)
-            'Value ${previousPage * _itemsPerPage + i}',
+            'Value ${pageToLoad * _itemsPerPage + i}',
         ],
-        page: previousPage + 1,
+        page: pageToLoad,
         lastPage: 5,
       );
     }).then((response) => _state.on(response, query: params?.query));

@@ -156,7 +156,10 @@ class BodyProvider<T> extends BodyProviderBase<T> {
     // Disable state or cache providers if they are not set
     allowState = allowState && state != null;
     allowCache = allowCache && cache != null;
-    DataBuilderParams params = DataBuilderParams(query: query);
+    DataBuilderParams params = DataBuilderParams(
+      query: query,
+      lastPage: isPaginated ? (state as PaginatedState).get(query) : null,
+    );
 
     final controller = StreamController<BodyState<T>>();
     StreamSubscription<BodyState<T>>? loadSubscription;

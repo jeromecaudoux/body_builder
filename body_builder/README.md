@@ -96,12 +96,13 @@ class FollowersState extends PaginatedState<String> {}
 final followersState = FollowersState();
 
 Future<Iterable<String>> loadFollowers([DataBuilderParams? params]) {
-  final previousPage = params?.lastPage?.page;
+  int previousPage = params?.lastPage?.page ?? -1;
+  int pageToLoad = previousPage + 1; // First page to load will be 0
 
   return Future.delayed(const Duration(seconds: 1), () {
     return PaginatedResponse<String>(
-      items: List.generate(10, (i) => 'Follower ${previousPage * 10 + i}'),
-      page: previousPage + 1,
+      items: List.generate(10, (i) => 'Follower ${pageToLoad * 10 + i}'),
+      page: pageToLoad,
       lastPage: 5,
     );
   }).then((response) => followersState.on(response, query: params?.query));

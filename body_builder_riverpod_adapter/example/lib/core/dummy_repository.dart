@@ -97,9 +97,9 @@ class DummyRepository {
     await Future.delayed(const Duration(seconds: 1));
     DateTime now = DateTime.now();
     debugPrint('--> Doing fake API call.');
-    throw Exception(
-      'When the code decides to cha-cha, we\'ve got a bug with dance moves!',
-    );
+    // throw Exception(
+    //   'When the code decides to cha-cha, we\'ve got a bug with dance moves!',
+    // );
     return '${id == null ? '' : '[$id]'} '
         'Fetch date: ${now.hour}h ${now.minute}m ${now.second}s';
   }
@@ -107,29 +107,30 @@ class DummyRepository {
   Future<PaginatedResponse<String>> fetchPaginated(
     DataBuilderParams? params,
   ) async {
-    int previousPage = params!.lastPage!.page;
-    return await _dummyResponse(previousPage, null, params.query);
+    return await _dummyResponse(params, null);
   }
 
   Future<PaginatedResponse<String>> fetchById(
     int id,
     DataBuilderParams? params,
   ) async {
-    int previousPage = params!.lastPage!.page;
-    return await _dummyResponse(previousPage, id, params.query);
+    return await _dummyResponse(params, id);
   }
 
   Future<PaginatedResponse<String>> _dummyResponse(
-    int previousPage, [
+    DataBuilderParams? params, [
     int? id,
-    String? query,
   ]) async {
+    String? query = params?.query;
+    int previousPage = params?.lastPage?.page ?? -1;
+    int pageToLoad = previousPage + 1;
+    debugPrint('Fetching previousPage=$previousPage, nextPage=$pageToLoad');
     await Future.delayed(const Duration(seconds: 1));
 
     // return PaginatedResponse<String>(
     //   items: [
     //   ],
-    //   page: previousPage + 1,
+    //   page: pageToLoad,
     //   lastPage: 5000,
     // );
     /// Uncomment this to test the error handling mechanism
@@ -142,10 +143,10 @@ class DummyRepository {
       items: [
         /// Generate dummy paginated data
         for (int i = 0; i < _itemsPerPage; i++)
-          '${id == null ? '' : '[$id]'} Value ${previousPage * _itemsPerPage + i} '
-              '${query?.isNotEmpty == true ? '($query)' : '<empty query>'}',
+          '${id == null ? '' : '[$id]'} Value ${pageToLoad * _itemsPerPage + i} '
+              'p=$pageToLoad, ${query?.isNotEmpty == true ? '($query)' : '<empty query>'}',
       ],
-      page: previousPage + 1,
+      page: pageToLoad,
       lastPage: 5,
     );
   }
