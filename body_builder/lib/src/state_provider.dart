@@ -126,7 +126,7 @@ class PaginatedState<T> extends StateProvider<Iterable<T>> {
   Iterable<T> data([String? query]) => get(query).items;
 
   @override
-  bool hasData([String? query]) => get(query).items.isNotEmpty;
+  bool hasData([String? query]) => get(query).hasData;
 
   @override
   bool hasMore([String? query]) => get(query).hasMore;
@@ -216,7 +216,7 @@ class DataState<T> {
   PaginatedBase<T>? _lastResponse;
 
   Iterable<T> get items => _items;
-  bool get hasData => _items.isNotEmpty;
+  bool get hasData => _items.isNotEmpty && _page > -1;
   bool get hasMore => _lastPage == -1 || _page < _lastPage;
   int get page => _page;
   int get lastPage => _lastPage;

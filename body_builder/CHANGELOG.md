@@ -1,3 +1,7 @@
+## 2.0.5
+
+* Pagination > Fix first loading state with pagniated provider.
+
 ## 2.0.4
 
 * Pagination > Default page before any loading is now -1. This makes the first page to load "0".

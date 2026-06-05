@@ -124,7 +124,6 @@ class DummyRepository {
     String? query = params?.query;
     int previousPage = params?.lastPage?.page ?? -1;
     int pageToLoad = previousPage + 1;
-    debugPrint('Fetching previousPage=$previousPage, nextPage=$pageToLoad');
     await Future.delayed(const Duration(seconds: 1));
 
     // return PaginatedResponse<String>(
@@ -139,6 +138,7 @@ class DummyRepository {
     //     'When the code decides to cha-cha, we\'ve got a bug with dance moves!',
     //   );
     // }
+    debugPrint('Fetching previousPage=$previousPage, nextPage=$pageToLoad');
     return PaginatedResponse<String>(
       items: [
         /// Generate dummy paginated data
