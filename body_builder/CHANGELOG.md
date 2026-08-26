@@ -1,3 +1,7 @@
+## 2.0.7
+
+* Animation > Fix alignment of the of BodyBuiler's child when an animation is set.
+
 ## 2.0.6
 
 * Pagination > Fix an isssue when the first page is empty.

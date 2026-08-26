@@ -198,8 +198,20 @@ class BodyBuilderState<T> extends State<BodyBuilder<T>> {
         : AnimatedSwitcher(
             duration: widget.animationDuration!,
             child: child,
+            layoutBuilder: defaultLayoutBuilder,
           );
   }
+
+  Widget defaultLayoutBuilder(
+      Widget? currentChild, List<Widget> previousChildren) {
+    return Stack(
+      alignment: Alignment.topCenter,
+      children: <Widget>[
+        ...previousChildren,
+        if (currentChild != null) currentChild
+      ],
+    );
+  } 
 
   Widget _buildMainContent() {
     if (widget.customBuilder != null) {
